@@ -4,7 +4,6 @@ using HarmonyLib;
 
 namespace ExampleMod.Source;
 
-// TODO - adjust the plugin guid as needed
 [BepInAutoPlugin("io.github.yourgithubusername.examplemod")]
 public partial class ExampleModPlugin : BaseUnityPlugin {
     private Harmony harmony = null!;
