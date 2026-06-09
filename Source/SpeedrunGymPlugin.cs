@@ -2,10 +2,10 @@ using System;
 using BepInEx;
 using HarmonyLib;
 
-namespace ExampleMod.Source;
+namespace SpeedrunGym.Source;
 
-[BepInAutoPlugin("io.github.yourgithubusername.examplemod")]
-public partial class ExampleModPlugin : BaseUnityPlugin {
+[BepInAutoPlugin("io.github.jakobhellermann.speedrungym")]
+public partial class SpeedrunGymPlugin : BaseUnityPlugin {
     private Harmony harmony = null!;
 
     private void Awake() {

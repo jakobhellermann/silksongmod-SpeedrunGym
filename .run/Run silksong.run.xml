@@ -13,7 +13,7 @@
     <option name="EXECUTE_SCRIPT_FILE" value="false" />
     <envs />
     <method v="2">
-      <option name="Build" default="false" projectName="ExampleMod" projectPath="$PROJECT_DIR$/ExampleMod.csproj" />
+      <option name="Build" default="false" projectName="SpeedrunGym" projectPath="$PROJECT_DIR$/SpeedrunGym.csproj" />
     </method>
   </configuration>
 </component>
