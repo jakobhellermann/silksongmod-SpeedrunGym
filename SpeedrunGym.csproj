@@ -21,7 +21,7 @@
 
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageIcon>icon.png</PackageIcon>
-        <RepositoryUrl>https://github.com/YourGitHubUsername/ExampleMod</RepositoryUrl>
+        <RepositoryUrl>https://github.com/jakobhellermann/SpeedrunGym</RepositoryUrl>
     </PropertyGroup>
     <PropertyGroup Condition="Exists('$(ManagedDir)')">
         <SilksongGameLibsExcludeAssets>compile</SilksongGameLibsExcludeAssets>
@@ -73,7 +73,7 @@
         <!-- Local install -->
         <Copy
                 SourceFiles="@(Binaries)"
-                DestinationFolder="$(SilksongPluginsFolder)/YourGitHubUsername-$(AssemblyTitle)/%(Binaries.LocalDir)"
+                DestinationFolder="$(SilksongPluginsFolder)/jakobhellermann-$(AssemblyTitle)/%(Binaries.LocalDir)"
                 Condition="'$(SilksongPluginsFolder)' != '' And Exists('$(SilksongPluginsFolder)')"
         />
 

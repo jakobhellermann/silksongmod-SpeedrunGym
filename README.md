@@ -1,3 +1,3 @@
-# ExampleMod
+# SpeedrunGym
 
 A Hollow Knight: Silksong mod.
