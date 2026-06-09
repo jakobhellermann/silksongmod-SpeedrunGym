@@ -23,6 +23,10 @@
         <PackageIcon>icon.png</PackageIcon>
         <RepositoryUrl>https://github.com/YourGitHubUsername/ExampleMod</RepositoryUrl>
     </PropertyGroup>
+    <PropertyGroup Condition="Exists('$(ManagedDir)')">
+        <SilksongGameLibsExcludeAssets>compile</SilksongGameLibsExcludeAssets>
+    </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="BepInEx.Analyzers" Version="1.0.8" PrivateAssets="all"/>
         <PackageReference Include="BepInEx.Core" Version="5.4.21"/>
@@ -39,8 +43,16 @@
                 Include="Silksong.GameLibs"
                 Version="*-*"
                 PrivateAssets="all"
-
+                ExcludeAssets="$(SilksongGameLibsExcludeAssets)"
         />
+    </ItemGroup>
+
+    <ItemGroup Condition="Exists('$(ManagedDir)')">
+        <LocalReferences
+                Include="$(ManagedDir)*.dll"
+                Exclude="$(ManagedDir)Mono*.dll;$(ManagedDir)netstandard.dll;$(ManagedDir)System*.dll;$(ManagedDir)mscorlib.dll"
+        />
+        <Reference Include="@(LocalReferences)" Private="false"/>
     </ItemGroup>
 
     <ItemGroup>
