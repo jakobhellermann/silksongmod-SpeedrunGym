@@ -1,6 +1,7 @@
 using System;
 using BepInEx;
 using HarmonyLib;
+using SpeedrunGym.Source.Moves;
 
 namespace SpeedrunGym.Source;
 
@@ -11,6 +12,8 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
     private void Awake() {
         Log.Init(Logger);
         Log.Info($"Plugin {Name} ({Id}) has loaded!");
+
+        PogoEndlagDetector.BindConfig(Config);
 
         try {
             harmony = Harmony.CreateAndPatchAll(GetType().Assembly);
@@ -29,5 +32,13 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         }
 
         Log.Info($"Plugin {Name} ({Id}) has been unloaded!");
+    }
+
+    private void LateUpdate() {
+        try {
+            PogoEndlagDetector.LateUpdate();
+        } catch (Exception e) {
+            Log.Error($"Error during LateUpdate: {e}");
+        }
     }
 }
