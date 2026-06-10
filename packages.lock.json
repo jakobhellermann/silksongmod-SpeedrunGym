@@ -20,9 +20,9 @@
       },
       "Hamunii.BepInEx.AutoPlugin": {
         "type": "Direct",
-        "requested": "[2.0.1, )",
-        "resolved": "2.0.1",
-        "contentHash": "UDVQtYOGU1v+xkYIRubm4zSIRtCW42kWgJ3sXIbqYSD1qSseH9gU44+zQMNRCy3BYXITtwWE3RqoyJdWUjDASA=="
+        "requested": "[2.1.0, )",
+        "resolved": "2.1.0",
+        "contentHash": "EuH0DoeBkpEiLYwCVZrlrQiNoqYi7U42+MCGpVim22erghvYYjPosEQTCHMsmyyBjLO/0NuLCu4I9aO/EkjVRQ=="
       },
       "Harmonize": {
         "type": "Direct",
@@ -383,14 +383,6 @@
           "Microsoft.NETCore.Platforms": "1.1.0",
           "Microsoft.NETCore.Targets": "1.1.0",
           "System.Runtime": "4.3.0"
-        }
-      },
-      "devutils": {
-        "type": "Project",
-        "dependencies": {
-          "BepInEx.Core": "[5.4.21, )",
-          "HarmonyX": "[2.9.0, )",
-          "UnityEngine.Modules": "[6000.0.50, )"
         }
       }
     }
