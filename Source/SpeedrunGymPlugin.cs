@@ -1,7 +1,9 @@
 using System;
 using BepInEx;
 using HarmonyLib;
+using HutongGames.PlayMaker;
 using SpeedrunGym.Source.Moves;
+using UnityEngine.SceneManagement;
 
 namespace SpeedrunGym.Source;
 
@@ -14,6 +16,9 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         Log.Info($"Plugin {Name} ({Id}) has loaded!");
 
         PogoEndlagDetector.BindConfig(Config);
+        ForceCrawPogo.BindConfig(Config);
+
+        SceneManager.sceneLoaded += OnSceneLoaded;
 
         try {
             harmony = Harmony.CreateAndPatchAll(GetType().Assembly);
@@ -26,7 +31,9 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         // Clean up everything, in order to support hot reloading
 
         try {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
             harmony.UnpatchSelf();
+            ForceCrawPogo.Cleanup();
         } catch (Exception e) {
             Log.Info($"Plugin {Name} ({Id}) failed to clean up: {e}");
         }
@@ -39,6 +46,30 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
             PogoEndlagDetector.LateUpdate();
         } catch (Exception e) {
             Log.Error($"Error during LateUpdate: {e}");
+        }
+    }
+
+    // Single global scene-loaded listener; dispatches to features that need it.
+    private static void OnSceneLoaded(Scene scene, LoadSceneMode loadMode) {
+        try {
+            ForceCrawPogo.OnSceneLoaded();
+        } catch (Exception e) {
+            Log.Error($"Error during OnSceneLoaded: {e}");
+        }
+    }
+}
+
+[HarmonyPatch]
+internal static class FsmStatePatches {
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(Fsm), "EnterState", typeof(FsmState))]
+#pragma warning disable HARMONIZE001
+    private static void EnterState(Fsm __instance, FsmState state) {
+#pragma warning restore HARMONIZE001
+        try {
+            ForceCrawPogo.OnEnterState(__instance, state);
+        } catch (Exception e) {
+            Log.Error(e);
         }
     }
 }
