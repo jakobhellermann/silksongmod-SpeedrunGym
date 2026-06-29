@@ -64,6 +64,8 @@ internal static class PogoEndlagDetector {
         if (!enabled.Value) return;
         if (hero.Config.DownSlashType is not HeroControllerConfig.DownSlashTypes.DownSpike) return;
 
+        if (hero.cState.shuttleCock) return;
+
         startedDownspike = new CurrentDownspike();
     }
 
@@ -127,6 +129,11 @@ internal static class PogoEndlagDetector {
         if (!hero) return;
 
         if (startedDownspike is not { } downspike) return;
+
+        if (hero.cState.dashing) {
+            startedDownspike = null;
+            return;
+        }
 
         var moveInput = InputHandler.SilentInstance.inputActions.MoveVector.Vector.x;
 
