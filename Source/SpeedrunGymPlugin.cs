@@ -17,8 +17,8 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         Log.Init(Logger);
         Log.Info($"Plugin {Name} ({Id}) has loaded!");
 
-        PogoEndlagDetector.BindConfig(Config);
         ForceCrawPogo.BindConfig(Config);
+        PogoEndlagDetector.BindConfig(Config);
 
         worldToasts = WorldToastManager.Create();
         SceneManager.sceneLoaded += OnSceneLoaded;
