@@ -101,7 +101,7 @@ internal static class PogoEndlagDetector {
                     // Pressed a direction early: report it now. The "held neutral late" case
                     // is reported later in LateUpdate once neutral is regained.
                     if (startedDownspike.DirectionPress is { } directionPress)
-                        HeroToast($"dir {now - directionPress} early", FailColor);
+                        HeroToast($"dir repress {now - directionPress} early", FailColor);
                     break;
                 }
             }
@@ -166,7 +166,7 @@ internal static class PogoEndlagDetector {
 
                 if (moveInput == 0) return; // still neutral
                 if (afterRelevant.Ms >= slowThresholdMs.Value)
-                    HeroToast($"slow +{afterRelevant}", SlowColor);
+                    HeroToast($"slow repress +{afterRelevant}", SlowColor);
                 else
                     HeroToast($"good +{afterRelevant}", GoodColor);
             }
