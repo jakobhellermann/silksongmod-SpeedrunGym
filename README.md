@@ -2,7 +2,8 @@
 
 Contains utilities for speedrun practice. Feature ideas welcome.
 
-Can be configured using BepInEx configuration, e.g. at runtime using [ConfigurationManager](https://thunderstore.io/c/hollow-knight-silksong/p/jakobhellermann/BepInExConfigurationManager/).
+Can be configured using BepInEx configuration, e.g. at runtime
+using [ConfigurationManager](https://thunderstore.io/c/hollow-knight-silksong/p/jakobhellermann/BepInExConfigurationManager/).
 
 ## RNG Normalization
 

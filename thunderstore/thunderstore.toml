@@ -20,6 +20,10 @@ outdir = "./dist"
 source = "./temp"
 target = "/"
 
+[[build.copy]]
+source = "../LICENSE"
+target = "/"
+
 # additional files and directories can be added to the package like this:
 # [[build.copy]]
 # source = "./CHANGELOG.md"
