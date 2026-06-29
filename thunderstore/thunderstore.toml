@@ -27,8 +27,8 @@ target = "/"
 
 [publish]
 repository = "https://thunderstore.io"
-communities = [ "hollow-knight-silksong" ]
+communities = ["hollow-knight-silksong"]
 
 [publish.categories]
 # available categories can be found at https://github.com/thunderstore-io/ecosystem-schema/blob/master/games/data/hollow-knight-silksong.yml
-hollow-knight-silksong = [ "mods", "utility" ]
+hollow-knight-silksong = ["mods", "utility"]

@@ -27,6 +27,14 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         }
     }
 
+    private void LateUpdate() {
+        try {
+            PogoEndlagDetector.LateUpdate();
+        } catch (Exception e) {
+            Log.Error($"Error during LateUpdate: {e}");
+        }
+    }
+
     private void OnDestroy() {
         // Clean up everything, in order to support hot reloading
 
@@ -39,14 +47,6 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         }
 
         Log.Info($"Plugin {Name} ({Id}) has been unloaded!");
-    }
-
-    private void LateUpdate() {
-        try {
-            PogoEndlagDetector.LateUpdate();
-        } catch (Exception e) {
-            Log.Error($"Error during LateUpdate: {e}");
-        }
     }
 
     // Single global scene-loaded listener; dispatches to features that need it.

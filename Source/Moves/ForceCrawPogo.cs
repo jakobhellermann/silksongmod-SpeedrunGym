@@ -16,14 +16,15 @@ namespace SpeedrunGym.Source.Moves;
 // The EnterState patch and sceneLoaded listener that drive this live in the plugin; it forwards
 // to OnEnterState / OnSceneLoaded here.
 internal static class ForceCrawPogo {
-    private enum Mode {
-        Normal,
-        Early, // attack on the 1st decision
-        Late1, // attack on the 2nd decision
-        Late2 // attack on the 3rd decision
-    }
-
     private static ConfigEntry<Mode> mode = null!;
+
+    private static int decisionCount;
+
+    // The action we last rewrote plus its authored values, so we can restore vanilla randomness.
+    private static SendRandomEventV4? patchedAction;
+    private static float[] origWeights = [];
+    private static int[] origEventMax = [];
+    private static int[] origMissedMax = [];
 
     internal static void BindConfig(ConfigFile config) {
         mode = config.Bind("Normalization", "Force craw pogo", Mode.Normal,
@@ -44,14 +45,6 @@ internal static class ForceCrawPogo {
         decisionCount = 0;
         patchedAction = null;
     }
-
-    private static int decisionCount;
-
-    // The action we last rewrote plus its authored values, so we can restore vanilla randomness.
-    private static SendRandomEventV4? patchedAction;
-    private static float[] origWeights = [];
-    private static int[] origEventMax = [];
-    private static int[] origMissedMax = [];
 
     private static void Restore() {
         if (patchedAction is null) return;
@@ -93,7 +86,8 @@ internal static class ForceCrawPogo {
 
         decisionCount++;
         var forceAttack = decisionCount >= target;
-        Log.Info($"[craw] normalize flap-move decision #{decisionCount} (target {target}) -> {(forceAttack ? "ATTACK" : "SHIFT")}");
+        Log.Info(
+            $"[craw] normalize flap-move decision #{decisionCount} (target {target}) -> {(forceAttack ? "ATTACK" : "SHIFT")}");
         if (forceAttack) decisionCount = 0;
 
         // Make the random choice deterministic: only the desired event keeps weight, and the
@@ -103,5 +97,12 @@ internal static class ForceCrawPogo {
             action.weights[i].Value = i == wantIndex ? 1f : 0f;
         foreach (var max in action.eventMax) max.Value = int.MaxValue;
         foreach (var max in action.missedMax) max.Value = int.MaxValue;
+    }
+
+    private enum Mode {
+        Normal,
+        Early, // attack on the 1st decision
+        Late1, // attack on the 2nd decision
+        Late2 // attack on the 3rd decision
     }
 }

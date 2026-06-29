@@ -11,12 +11,17 @@ namespace SpeedrunGym.Source.Moves;
 // Detects pogo (downspike) landings and reports whether the endlag cancel was executed,
 // and how many ms too early the landing was (vs. using the full spike duration).
 internal static class PogoEndlagDetector {
+    private const string Section = "Pogo Endlag";
     private static ConfigEntry<bool> enabled = null!;
     private static ConfigEntry<bool> showGood = null!;
     private static ConfigEntry<float> slowThresholdMs = null!;
     private static ConfigEntry<bool> showFrameCounts = null!;
 
-    private const string Section = "Pogo Endlag";
+    private static readonly Color GoodColor = new(0.4f, 1f, 0.4f);
+    private static readonly Color SlowColor = new(1f, 1f, 0.4f);
+    private static readonly Color FailColor = new(1f, 0.3f, 0.4f);
+
+    private static CurrentDownspike? startedDownspike;
 
     internal static void BindConfig(ConfigFile config) {
         enabled = config.Bind(Section, "Enabled", false,
@@ -27,36 +32,6 @@ internal static class PogoEndlagDetector {
             "Above this many ms, a successful cancel is shown as 'slow' (yellow) instead of green.");
         showFrameCounts = config.Bind(Section, "Show frame counts", false,
             "Include the frame count in popups (e.g. '3f (50ms)') instead of just milliseconds.");
-    }
-
-    internal record struct FrameTime {
-        private int frame;
-        private float Time;
-
-        public static FrameTime Now => new()
-            { frame = UnityEngine.Time.frameCount, Time = UnityEngine.Time.realtimeSinceStartup };
-
-        public static FrameTimeDelta operator -(FrameTime a, FrameTime b) {
-            return new FrameTimeDelta { Frames = a.frame - b.frame, Ms = (a.Time - b.Time) * 1000f };
-        }
-    }
-
-    internal record struct FrameTimeDelta {
-        public int Frames;
-        public float Ms;
-
-        public override string ToString() {
-            return showFrameCounts.Value ? $"{Frames}f ({Ms:0}ms)" : $"{Ms:0}ms";
-        }
-    }
-
-    private record CurrentDownspike {
-        public bool ReleasedNeutral; // saw a neutral frame after the attack started
-        public FrameTime? DirectionPress; // first direction press after releasing to neutral
-        public FrameTime LastInput; // FrameTime of the most recent EarlyUpdate
-        public FrameTime? RelevantInput; // frame the state resolved to idle/running
-        public FrameTime? NeutralDeadline; // input frame that resolution reflects (= RelevantInput - 1 frame)
-        public bool Success;
     }
 
 
@@ -108,10 +83,6 @@ internal static class PogoEndlagDetector {
         }
     }
 
-    private static readonly Color GoodColor = new(0.4f, 1f, 0.4f);
-    private static readonly Color SlowColor = new(1f, 1f, 0.4f);
-    private static readonly Color FailColor = new(1f, 0.3f, 0.4f);
-
     // Show a small popup floating up next to Hornet, slightly above her head.
     private static void HeroToast(string message, Color color) {
         var hero = HeroController.SilentInstance;
@@ -120,8 +91,6 @@ internal static class PogoEndlagDetector {
             hero.transform.position + Vector3.up * 1.5f + Vector3.right * (hero.cState.facingRight ? 1 : -1), color,
             moveUp: false);
     }
-
-    private static CurrentDownspike? startedDownspike;
 
     // Runs in LateUpdate. OnUpdateState always fires earlier in the same frame (physics collision)
     internal static void LateUpdate() {
@@ -184,10 +153,39 @@ internal static class PogoEndlagDetector {
             startedDownspike = null;
         }
     }
+
+    internal record struct FrameTime {
+        private int frame;
+        private float Time;
+
+        public static FrameTime Now => new()
+            { frame = UnityEngine.Time.frameCount, Time = UnityEngine.Time.realtimeSinceStartup };
+
+        public static FrameTimeDelta operator -(FrameTime a, FrameTime b) {
+            return new FrameTimeDelta { Frames = a.frame - b.frame, Ms = (a.Time - b.Time) * 1000f };
+        }
+    }
+
+    internal record struct FrameTimeDelta {
+        public int Frames;
+        public float Ms;
+
+        public override string ToString() {
+            return showFrameCounts.Value ? $"{Frames}f ({Ms:0}ms)" : $"{Ms:0}ms";
+        }
+    }
+
+    private record CurrentDownspike {
+        public FrameTime? DirectionPress; // first direction press after releasing to neutral
+        public FrameTime LastInput; // FrameTime of the most recent EarlyUpdate
+        public FrameTime? NeutralDeadline; // input frame that resolution reflects (= RelevantInput - 1 frame)
+        public bool ReleasedNeutral; // saw a neutral frame after the attack started
+        public FrameTime? RelevantInput; // frame the state resolved to idle/running
+        public bool Success;
+    }
 }
 
 // ReSharper disable InconsistentNaming
-
 [HarmonyPatch]
 internal static class PogoEndlagPatches {
     [HarmonyPrefix]
