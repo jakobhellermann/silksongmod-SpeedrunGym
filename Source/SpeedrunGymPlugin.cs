@@ -3,6 +3,7 @@ using BepInEx;
 using HarmonyLib;
 using HutongGames.PlayMaker;
 using SpeedrunGym.Source.Moves;
+using SpeedrunGym.Source.WorldToasts;
 using UnityEngine.SceneManagement;
 
 namespace SpeedrunGym.Source;
@@ -10,6 +11,7 @@ namespace SpeedrunGym.Source;
 [BepInAutoPlugin("io.github.jakobhellermann.speedrungym")]
 public partial class SpeedrunGymPlugin : BaseUnityPlugin {
     private Harmony harmony = null!;
+    private WorldToastManager worldToasts = null!;
 
     private void Awake() {
         Log.Init(Logger);
@@ -18,6 +20,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         PogoEndlagDetector.BindConfig(Config);
         ForceCrawPogo.BindConfig(Config);
 
+        worldToasts = WorldToastManager.Create();
         SceneManager.sceneLoaded += OnSceneLoaded;
 
         try {
@@ -30,6 +33,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
     private void LateUpdate() {
         try {
             PogoEndlagDetector.LateUpdate();
+            worldToasts.Update();
         } catch (Exception e) {
             Log.Error($"Error during LateUpdate: {e}");
         }
@@ -42,6 +46,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
             SceneManager.sceneLoaded -= OnSceneLoaded;
             harmony.UnpatchSelf();
             ForceCrawPogo.Cleanup();
+            worldToasts.Destroy();
         } catch (Exception e) {
             Log.Info($"Plugin {Name} ({Id}) failed to clean up: {e}");
         }

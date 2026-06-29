@@ -1,8 +1,8 @@
 using System;
 using BepInEx.Configuration;
-using DevUtils.WorldToasts;
 using GlobalEnums;
 using HarmonyLib;
+using SpeedrunGym.Source.WorldToasts;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
