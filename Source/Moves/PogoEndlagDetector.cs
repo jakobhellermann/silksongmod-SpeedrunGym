@@ -59,7 +59,7 @@ internal static class PogoEndlagDetector {
                     };
 
                     startedDownspike.Success = true;
-                    // ToastManager.Toast($"ENDLAG CANCEL: worked {now}");
+                    startedDownspike.WasJumping = cState.jumping; // baseline for rising-edge jump detection
                     break;
                 case ActorStates.airborne:
                     // ToastManager.Toast("pogo ended mid air");
@@ -116,16 +116,8 @@ internal static class PogoEndlagDetector {
 
         if (downspike is { RelevantInput: { } relevantInput }) {
             // after relevant frame
-
             var afterRelevant = FrameTime.Now - relevantInput;
-            if (afterRelevant.Ms > 300) {
-                // Failed and never returned to neutral within the window: the "neutral late" path
-                // never fires (it needs a neutral frame to measure), so report it here instead.
-                if (downspike is { Success: false, DirectionPress: null })
-                    HeroToast("no neutral", FailColor);
-                startedDownspike = null;
-                return;
-            }
+            var timedOut = afterRelevant.Ms > 300;
 
             if (downspike.Success) {
                 if (!showGood.Value) {
@@ -133,25 +125,72 @@ internal static class PogoEndlagDetector {
                     return;
                 }
 
-                if (moveInput == 0) return; // still neutral
-                if (afterRelevant.Ms >= slowThresholdMs.Value)
-                    HeroToast($"slow repress +{afterRelevant}", SlowColor);
-                else
-                    HeroToast($"good +{afterRelevant}", GoodColor);
+                // Capture the direction-repress timing once.
+                if (downspike.RepressDelta is null && moveInput != 0)
+                    downspike.RepressDelta = afterRelevant;
+
+                // Earliest jumpable frame, observed before the jump executes. If the jump fires on
+                // the very first jumpable frame (e.g. buffered) we never see this — that reads as 0.
+                if (downspike is { JumpExecuted: null, FirstCanJump: null } && hero.CanJump())
+                    downspike.FirstCanJump = FrameTime.Now;
+
+                // First actual jump (rising edge of cState.jumping).
+                if (downspike.JumpExecuted is null && hero.cState.jumping && !downspike.WasJumping)
+                    downspike.JumpExecuted = FrameTime.Now;
+                downspike.WasJumping = hero.cState.jumping;
+
+                // Wait until both the repress and the jump are captured (either order), or the
+                // window expires — so a jump before the repress still shows both.
+                var bothDone = downspike is { RepressDelta: not null, JumpExecuted: not null };
+                if (!bothDone && !timedOut) return;
+
+                ShowSuccessResult(downspike);
+                startedDownspike = null;
+                return;
             }
-            else {
-                if (moveInput != 0) return; // still moving
-                // The direction-early case already reported in OnUpdateState; only report
-                // the "held neutral too late" magnitude here.
-                if (downspike.DirectionPress is null) {
-                    var deadline = downspike.NeutralDeadline ?? relevantInput;
-                    var tooLate = FrameTime.Now - deadline;
-                    HeroToast($"neutral {tooLate} late", FailColor);
-                }
+
+            // failed cancel
+            if (timedOut) {
+                // Never returned to neutral within the window: the "neutral late" path never fires
+                // (it needs a neutral frame to measure), so report it here instead.
+                if (downspike.DirectionPress is null)
+                    HeroToast("no neutral", FailColor);
+                startedDownspike = null;
+                return;
+            }
+
+            if (moveInput != 0) return; // still moving
+            // The direction-early case already reported in OnUpdateState; only report the
+            // "held neutral too late" magnitude here.
+            if (downspike.DirectionPress is null) {
+                var deadline = downspike.NeutralDeadline ?? relevantInput;
+                HeroToast($"neutral {FrameTime.Now - deadline} late", FailColor);
             }
 
             startedDownspike = null;
         }
+    }
+
+    // Compose the combined success popup: direction-repress timing and/or jump timing, whichever
+    // the player performed within the window.
+    private static void ShowSuccessResult(CurrentDownspike d) {
+        var color = GoodColor;
+
+        string? repress = null;
+        if (d.RepressDelta is { } r) {
+            if (r.Ms >= slowThresholdMs.Value) color = SlowColor; // yellow when slow, green otherwise
+            repress = $"repress +{r}";
+        }
+
+        string? jump = null;
+        if (d.JumpExecuted is { } jumped) {
+            // FirstCanJump null → jumped on the first jumpable frame (optimal) → 0.
+            var delta = d.FirstCanJump is { } canJump ? jumped - canJump : default;
+            jump = $"jump +{delta}";
+        }
+
+        var msg = repress is null ? jump : jump is null ? repress : $"{repress}\n{jump}";
+        if (msg is not null) HeroToast(msg, color);
     }
 
     internal record struct FrameTime {
@@ -177,11 +216,16 @@ internal static class PogoEndlagDetector {
 
     private record CurrentDownspike {
         public FrameTime? DirectionPress; // first direction press after releasing to neutral
+        public FrameTime? FirstCanJump; // first frame CanJump() was true before the jump fired
+        public FrameTime? JumpExecuted; // first frame cState.jumping rose after the cancel
         public FrameTime LastInput; // FrameTime of the most recent EarlyUpdate
         public FrameTime? NeutralDeadline; // input frame that resolution reflects (= RelevantInput - 1 frame)
         public bool ReleasedNeutral; // saw a neutral frame after the attack started
         public FrameTime? RelevantInput; // frame the state resolved to idle/running
+
+        public FrameTimeDelta? RepressDelta; // captured direction-repress timing (after RelevantInput)
         public bool Success;
+        public bool WasJumping; // previous-frame jumping state, for rising-edge detection
     }
 }
 
