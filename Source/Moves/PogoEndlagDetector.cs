@@ -14,7 +14,8 @@ internal static class PogoEndlagDetector {
     private const string Section = "Pogo Endlag";
     private static ConfigEntry<bool> enabled = null!;
     private static ConfigEntry<bool> showGood = null!;
-    private static ConfigEntry<float> slowThresholdMs = null!;
+    private static ConfigEntry<float> slowRepressThresholdMs = null!;
+    private static ConfigEntry<float> slowJumpThresholdMs = null!;
     private static ConfigEntry<bool> showFrameCounts = null!;
 
     private static readonly Color GoodColor = new(0.4f, 1f, 0.4f);
@@ -28,8 +29,10 @@ internal static class PogoEndlagDetector {
             "Detect pogo (downspike) endlag cancels and show feedback popups next to Hornet.");
         showGood = config.Bind(Section, "Show good", true,
             "Show a popup on a successful endlag cancel.");
-        slowThresholdMs = config.Bind(Section, "Slow threshold (ms)", 60f,
-            "Above this many ms, a successful cancel is shown as 'slow' (yellow) instead of green.");
+        slowRepressThresholdMs = config.Bind(Section, "Slow repress threshold", 60f,
+            "Repress slower than this many ms turns the popup yellow.");
+        slowJumpThresholdMs = config.Bind(Section, "Slow jump threshold", 60f,
+            "Jump slower than this many ms turns the popup yellow.");
         showFrameCounts = config.Bind(Section, "Show frame counts", false,
             "Include the frame count in popups (e.g. '3f (50ms)') instead of just milliseconds.");
     }
@@ -174,11 +177,12 @@ internal static class PogoEndlagDetector {
     // Compose the combined success popup: direction-repress timing and/or jump timing, whichever
     // the player performed within the window.
     private static void ShowSuccessResult(CurrentDownspike d) {
-        var color = GoodColor;
+        // Each threshold only flips the popup to yellow; either part being slow colours the whole popup.
+        var slow = false;
 
         string? repress = null;
         if (d.RepressDelta is { } r) {
-            if (r.Ms >= slowThresholdMs.Value) color = SlowColor; // yellow when slow, green otherwise
+            if (r.Ms >= slowRepressThresholdMs.Value) slow = true;
             repress = $"repress +{r}";
         }
 
@@ -186,11 +190,12 @@ internal static class PogoEndlagDetector {
         if (d.JumpExecuted is { } jumped) {
             // FirstCanJump null → jumped on the first jumpable frame (optimal) → 0.
             var delta = d.FirstCanJump is { } canJump ? jumped - canJump : default;
+            if (delta.Ms >= slowJumpThresholdMs.Value) slow = true;
             jump = $"jump +{delta}";
         }
 
         var msg = repress is null ? jump : jump is null ? repress : $"{repress}\n{jump}";
-        if (msg is not null) HeroToast(msg, color);
+        if (msg is not null) HeroToast(msg, slow ? SlowColor : GoodColor);
     }
 
     internal record struct FrameTime {
