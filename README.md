@@ -19,7 +19,7 @@ Normalize how early the first craw dives.
 
 When enabled, will display why a pogo endlag cancel failed, or how close it was to being optimal.
 
-![pogo endlag ui](./docs/pogo-endlag.png)
+![pogo endlag ui](https://raw.githubusercontent.com/jakobhellermann/silksongmod-SpeedrunGym/main/docs/pogo-endlag.png)
 
 Possible popup messages:
 
