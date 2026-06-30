@@ -5,7 +5,7 @@ schemaVersion = "0.0.1"
 namespace = "jakobhellermann"
 description = "Utilities for practicing speedruns"
 
-websiteUrl = "https://github.com/jakobhellermann/SpeedrunGym"
+websiteUrl = "https://github.com/jakobhellermann/silksongmod-SpeedrunGym"
 containsNsfwContent = false
 
 [package.dependencies]
