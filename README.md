@@ -23,8 +23,8 @@ When enabled, will display why a pogo endlag cancel failed, or how close it was 
 
 Possible popup messages:
 
-- `good +Xms` - success, started moving X ms after the neutral landing.
-- `slow repress +Xms` - same, but slower than the configured slow threshold.
+- `repress +Xms` - success, re-pressed direction X ms after the neutral landing.
+- `jump +Xms` - jumped X ms after the earliest possible jump, shown on a second line.
 - `dir repress Xms early` - failed, you pressed a direction X ms too early.
 - `neutral Xms late` - you went neutral X ms too late.
 - `no neutral` - you never went neutral.
