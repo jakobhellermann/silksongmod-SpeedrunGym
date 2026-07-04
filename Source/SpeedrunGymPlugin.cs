@@ -19,6 +19,10 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
 
         ForceCrawPogo.BindConfig(Config);
         PogoEndlagDetector.BindConfig(Config);
+        JumpRepressDetector.BindConfig(Config);
+
+        WorldToastManager.MaxAge = Config.Bind("Toasts", "Lifetime seconds", 3f,
+            "How long feedback popups stay on screen before fading out.").Value;
 
         worldToasts = WorldToastManager.Create();
         SceneManager.sceneLoaded += OnSceneLoaded;
@@ -33,6 +37,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
     private void LateUpdate() {
         try {
             PogoEndlagDetector.LateUpdate();
+            JumpRepressDetector.LateUpdate();
             worldToasts.Update();
         } catch (Exception e) {
             Log.Error($"Error during LateUpdate: {e}");
@@ -57,6 +62,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
     // Single global scene-loaded listener; dispatches to features that need it.
     private static void OnSceneLoaded(Scene scene, LoadSceneMode loadMode) {
         try {
+            WorldToastManager.ClearAll();
             ForceCrawPogo.OnSceneLoaded();
         } catch (Exception e) {
             Log.Error($"Error during OnSceneLoaded: {e}");

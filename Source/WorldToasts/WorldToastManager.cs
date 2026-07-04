@@ -17,10 +17,11 @@ internal record struct WorldToastEntry(
 // Floating text popups anchored to world positions. Inlined from DevUtils so this mod has no
 // runtime dependency on it. The plugin owns the overlay canvas and pumps Update().
 internal class WorldToastManager {
-    private const float MaxAge = 3f;
+    internal static float MaxAge = 3f; // toast lifetime in seconds; configurable via the plugin
     private const float FloatSpeed = 0.5f;
     private const float BackdropAlpha = 0.5f;
     private const int DefaultFontSize = 10;
+    private const float ScreenMargin = 40f; // keep clamped toasts this far inside the canvas edges
 
     private static WorldToastManager? instance;
 
@@ -39,6 +40,16 @@ internal class WorldToastManager {
         go.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         Object.DontDestroyOnLoad(go);
         return instance = new WorldToastManager(canvas);
+    }
+
+    // Destroy all live toasts (e.g. on scene change — the canvas is DontDestroyOnLoad, so toasts would
+    // otherwise linger into the next scene, floating at stale world positions).
+    internal static void ClearAll() => instance?.ClearAllInner();
+
+    private void ClearAllInner() {
+        foreach (var entry in entries)
+            if (entry.Go) Object.Destroy(entry.Go);
+        entries.Clear();
     }
 
     // Destroy the canvas and clear the static instance (hot-reload cleanup).
@@ -100,29 +111,54 @@ internal class WorldToastManager {
                 continue;
             }
 
-            UpdatePosition(entry);
+            // While the toast is clamped to a screen edge its world anchor is off-screen — freeze its age
+            // so it doesn't fade/expire before it slides back into view and can actually be read.
+            if (UpdatePosition(entry)) {
+                entry.StartTime = now;
+                entries[i] = entry;
+                age = 0f;
+            }
+
             var alpha = entry.Fade ? 1f - age / MaxAge : 1f;
             entry.Text.color = new Color(entry.Color.r, entry.Color.g, entry.Color.b, entry.Color.a * alpha);
             entry.Backdrop.color = new Color(0, 0, 0, BackdropAlpha * alpha);
         }
     }
 
-    private void UpdatePosition(WorldToastEntry entry) {
+    // Positions the toast; returns true if it had to be clamped to a screen edge (anchor off-screen).
+    private bool UpdatePosition(WorldToastEntry entry) {
         // Camera.main is null while a scene is loading / before the gameplay camera exists — skip until it's back.
         var camera = Camera.main;
-        if (camera == null) return;
+        if (camera == null) return false;
 
         var age = Time.time - entry.StartTime;
         var floatedWorld = entry.MoveUp ? entry.WorldPos + Vector3.up * (age * FloatSpeed) : entry.WorldPos;
         var screenPos = camera.WorldToScreenPoint(floatedWorld);
 
+        // If the target is behind the camera WorldToScreenPoint mirrors x/y — flip it back so a clamped
+        // off-screen toast lands on the correct edge instead of the opposite one.
+        if (screenPos.z < 0f) {
+            screenPos.x = Screen.width - screenPos.x;
+            screenPos.y = Screen.height - screenPos.y;
+        }
+
         // convert screen pos to canvas local pos
+        var canvasRect = canvas.GetComponent<RectTransform>();
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            canvas.GetComponent<RectTransform>(),
+            canvasRect,
             screenPos,
             canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera,
             out var localPoint
         );
-        entry.Go.GetComponent<RectTransform>().localPosition = localPoint;
+
+        // Clamp into the canvas so the toast stays visible even when the camera doesn't follow Hornet
+        // (some tricks freeze the camera while she flies off-screen).
+        var rect = canvasRect.rect;
+        var clampedX = Mathf.Clamp(localPoint.x, rect.xMin + ScreenMargin, rect.xMax - ScreenMargin);
+        var clampedY = Mathf.Clamp(localPoint.y, rect.yMin + ScreenMargin, rect.yMax - ScreenMargin);
+        var clamped = !Mathf.Approximately(clampedX, localPoint.x) || !Mathf.Approximately(clampedY, localPoint.y);
+
+        entry.Go.GetComponent<RectTransform>().localPosition = new Vector2(clampedX, clampedY);
+        return clamped;
     }
 }
