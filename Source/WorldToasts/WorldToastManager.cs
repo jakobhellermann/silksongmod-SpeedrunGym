@@ -12,12 +12,15 @@ internal record struct WorldToastEntry(
     Vector3 WorldPos,
     Color Color,
     bool Fade,
-    bool MoveUp);
+    bool MoveUp) {
+    public bool Clamped; // was the toast clamped to a screen edge last frame (anchor off-screen)?
+}
 
 // Floating text popups anchored to world positions. Inlined from DevUtils so this mod has no
 // runtime dependency on it. The plugin owns the overlay canvas and pumps Update().
 internal class WorldToastManager {
     internal static float MaxAge = 3f; // toast lifetime in seconds; configurable via the plugin
+    private const float FadeFraction = 1f / 3f; // toast holds full opacity, then fades over this last fraction
     private const float FloatSpeed = 0.5f;
     private const float BackdropAlpha = 0.5f;
     private const int DefaultFontSize = 10;
@@ -104,24 +107,29 @@ internal class WorldToastManager {
         var now = Time.time;
         for (var i = entries.Count - 1; i >= 0; i--) {
             var entry = entries[i];
+
+            // Reset the lifetime only when the toast comes back from off-screen into view, and only if it
+            // hasn't started fading out yet — while clamped off-screen (or once fading) it keeps ageing
+            // normally and expires after MaxAge like any other.
+            var clamped = UpdatePosition(entry);
             var age = now - entry.StartTime;
+            var fadeStart = MaxAge * (1f - FadeFraction);
+            if (entry.Clamped && !clamped && age < fadeStart) {
+                entry.StartTime = now;
+                age = 0f;
+            }
+            entry.Clamped = clamped;
+
             if (age > MaxAge) {
                 Object.Destroy(entry.Go);
                 entries.RemoveAt(i);
                 continue;
             }
 
-            // While the toast is clamped to a screen edge its world anchor is off-screen — freeze its age
-            // so it doesn't fade/expire before it slides back into view and can actually be read.
-            if (UpdatePosition(entry)) {
-                entry.StartTime = now;
-                entries[i] = entry;
-                age = 0f;
-            }
-
-            var alpha = entry.Fade ? 1f - age / MaxAge : 1f;
+            var alpha = entry.Fade ? Mathf.Clamp01((MaxAge - age) / (MaxAge * FadeFraction)) : 1f;
             entry.Text.color = new Color(entry.Color.r, entry.Color.g, entry.Color.b, entry.Color.a * alpha);
             entry.Backdrop.color = new Color(0, 0, 0, BackdropAlpha * alpha);
+            entries[i] = entry;
         }
     }
 

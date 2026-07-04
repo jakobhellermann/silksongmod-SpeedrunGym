@@ -51,10 +51,10 @@ internal static class JumpRepressDetector {
 
         var pressed = input.inputActions.Jump.IsPressed;
 
-        // Reset while grounded: only air represses matter, and a ground release must not pair with a
-        // later press.
+        // Reset while grounded or dashing: only air represses matter, a ground release must not pair with
+        // a later press, and a jump out of a dash (shuttlecock → release → dash → jump) is not a repress.
         var hero = HeroController.SilentInstance;
-        if (hero && hero.cState.onGround) {
+        if (hero && (hero.cState.onGround || hero.cState.dashing)) {
             released = null;
             shuttlecockActive = false;
             prevPressed = pressed;
