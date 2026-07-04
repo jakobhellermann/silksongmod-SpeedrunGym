@@ -9,13 +9,15 @@ using Vector3 = UnityEngine.Vector3;
 
 namespace SpeedrunGym.Source.Moves;
 
-// Two separate popups for air jumps: on release, the vertical velocity at that moment (yvel ≈ 0 =
-// released at the apex; + = still rising, − = already falling); on the following re-press, how long the
-// repress took. State resets on the ground, and a pending release is dropped if no repress arrives in
-// time.
-internal static class JumpRepressDetector {
-    private const string Section = "Jump Repress";
-    private static ConfigEntry<bool> enabled = null!;
+// Two independent air-jump timing popups, each with its own toggle:
+//   Sprintjump Release — out of a dashjump (shuttlecock), the vertical velocity at the moment jump was
+//                        released (yvel ≈ 0 = released at the apex; − = still rising, + = already falling).
+//   Repress            — for any air jump, how long the repress took (release → re-press).
+// State resets on the ground or a dash, and a pending release is dropped if no repress arrives in time.
+internal static class JumpTimingDetector {
+    private const string Section = "Jump Timing";
+    private static ConfigEntry<bool> repress = null!;
+    private static ConfigEntry<bool> sprintjumpRelease = null!;
 
     private static readonly Color Color = new(0.4f, 1f, 0.4f);
     private const float ResetMs = 250f; // drop a pending release if no repress arrives within this window
@@ -25,8 +27,10 @@ internal static class JumpRepressDetector {
     private static bool shuttlecockActive; // a dashjump is in flight; gates the release-yvel popup
 
     internal static void BindConfig(ConfigFile config) {
-        enabled = config.Bind(Section, "Enabled", false,
-            "Report each air jump repress (release → re-press) with its timing and vertical velocity.");
+        repress = config.Bind(Section, "Repress", false,
+            "Report how long each air jump repress took (release → re-press) in a popup next to Hornet.");
+        sprintjumpRelease = config.Bind(Section, "Sprintjump Release", false,
+            "Out of a dashjump (shuttlecock), report the vertical velocity at the moment jump was released.");
     }
 
     // HeroController clears the jump input state on every jump (HeroJump → ClearJumpInputState), which
@@ -44,7 +48,7 @@ internal static class JumpRepressDetector {
     }
 
     internal static void LateUpdate() {
-        if (!enabled.Value) return;
+        if (!repress.Value && !sprintjumpRelease.Value) return;
 
         var input = InputHandler.SilentInstance;
         if (input == null) return;
@@ -68,13 +72,15 @@ internal static class JumpRepressDetector {
             // The release-yvel readout only makes sense out of a dashjump. Sign is flipped from Unity's
             // rb.velocity.y convention on request: shown − = rising, + = falling.
             if (shuttlecockActive) {
-                HeroToast(hero, $"release yvel={-YVel(hero):+0.0;-0.0}", Color, heightOffset: 1.9f);
+                if (sprintjumpRelease.Value)
+                    HeroToast(hero, $"release yvel={-YVel(hero):+0.0;-0.0}", Color, heightOffset: 1.9f);
                 shuttlecockActive = false;
             }
         } else if (!prevPressed && pressed && released is { } r) {
             var delta = now - r;
             released = null;
-            if (delta.Ms <= ResetMs) HeroToast(hero, $"repress +{Discount(delta)}", Color, heightOffset: 1.2f);
+            if (repress.Value && delta.Ms <= ResetMs)
+                HeroToast(hero, $"repress +{Discount(delta)}", Color, heightOffset: 1.2f);
         } else if (released is { } stale && (now - stale).Ms > ResetMs) {
             released = null; // repress window elapsed
         }
@@ -106,12 +112,12 @@ internal static class JumpRepressDetector {
 
 // ReSharper disable InconsistentNaming
 [HarmonyPatch]
-internal static class JumpRepressPatches {
+internal static class JumpTimingPatches {
     [HarmonyPostfix]
     [HarmonyPatch(typeof(HeroController), nameof(HeroController.ClearJumpInputState))]
     private static void ClearJumpInputState() {
         try {
-            JumpRepressDetector.OnInputCleared();
+            JumpTimingDetector.OnInputCleared();
         } catch (Exception e) {
             Log.Error(e);
         }
@@ -123,7 +129,7 @@ internal static class JumpRepressPatches {
     private static void OnShuttleCockJump() {
 #pragma warning restore HARMONIZE001
         try {
-            JumpRepressDetector.OnShuttleCockJump();
+            JumpTimingDetector.OnShuttleCockJump();
         } catch (Exception e) {
             Log.Error(e);
         }

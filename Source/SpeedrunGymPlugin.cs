@@ -19,7 +19,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
 
         ForceCrawPogo.BindConfig(Config);
         PogoEndlagDetector.BindConfig(Config);
-        JumpRepressDetector.BindConfig(Config);
+        JumpTimingDetector.BindConfig(Config);
 
         WorldToastManager.MaxAge = Config.Bind("Toasts", "Lifetime seconds", 3f,
             "How long feedback popups stay on screen before fading out.").Value;
@@ -37,7 +37,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
     private void LateUpdate() {
         try {
             PogoEndlagDetector.LateUpdate();
-            JumpRepressDetector.LateUpdate();
+            JumpTimingDetector.LateUpdate();
             worldToasts.Update();
         } catch (Exception e) {
             Log.Error($"Error during LateUpdate: {e}");
