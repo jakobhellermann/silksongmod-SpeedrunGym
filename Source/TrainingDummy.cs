@@ -130,8 +130,16 @@ public class TrainingDummy : IDisposable {
         dummy.SetContactDamage(contactDamage.Value);
         dummy.SetTakesKnockback(takeKnockback.Value);
 
-        go.transform.position = hero.transform.position +
-                                Vector3.right * ((hero.cState.facingRight ? 1f : -1f) * SpawnOffset);
+        // spawn standing on the ground beside the hero
+        var spawnX = hero.transform.position.x + (hero.cState.facingRight ? 1f : -1f) * SpawnOffset;
+        var groundY = hero.transform.position.y;
+        var groundHit = Physics2D.Raycast(new Vector2(spawnX, hero.transform.position.y), Vector2.down, 30f,
+            LayerMask.GetMask("Terrain"));
+        if (groundHit.collider) groundY = groundHit.point.y;
+        var rest = go.transform.Find("Rest Collider").GetComponent<BoxCollider2D>();
+        var bottomLocalY = rest.offset.y - rest.size.y * 0.5f;
+        go.transform.position = new Vector3(spawnX, groundY + 0.01f - bottomLocalY * go.transform.localScale.y,
+            go.transform.position.z);
 
         Log.Info("Spawned training dummy");
     }
