@@ -76,12 +76,14 @@ internal static class JumpTimingDetector {
                     HeroToast(hero, $"release yvel={-YVel(hero):+0.0;-0.0}", Color, heightOffset: 1.9f);
                 shuttlecockActive = false;
             }
-        } else if (!prevPressed && pressed && released is { } r) {
+        }
+        else if (!prevPressed && pressed && released is { } r) {
             var delta = now - r;
             released = null;
             if (repress.Value && delta.Ms <= ResetMs)
                 HeroToast(hero, $"repress +{Discount(delta)}", Color, heightOffset: 1.2f);
-        } else if (released is { } stale && (now - stale).Ms > ResetMs) {
+        }
+        else if (released is { } stale && (now - stale).Ms > ResetMs) {
             released = null; // repress window elapsed
         }
 

@@ -51,7 +51,8 @@ internal class WorldToastManager {
 
     private void ClearAllInner() {
         foreach (var entry in entries)
-            if (entry.Go) Object.Destroy(entry.Go);
+            if (entry.Go)
+                Object.Destroy(entry.Go);
         entries.Clear();
     }
 
@@ -118,6 +119,7 @@ internal class WorldToastManager {
                 entry.StartTime = now;
                 age = 0f;
             }
+
             entry.Clamped = clamped;
 
             if (age > MaxAge) {

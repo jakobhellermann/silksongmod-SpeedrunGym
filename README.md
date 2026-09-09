@@ -35,6 +35,6 @@ Two independently toggleable air-jump readouts, shown as popups next to Hornet.
 
 ![jump timing ui](https://raw.githubusercontent.com/jakobhellermann/silksongmod-SpeedrunGym/main/docs/jump-timing.png)
 
-- `Sprintjump Release` - out of a sprintjump, shows the vertical velocity at the moment you
-  released jump. `yvel ≈ 0` means you let go right at the peak, `-` = still gaining height, `+` = falling.
+- `Sprintjump Release` - out of a sprintjump, shows the vertical velocity at the moment you released jump. `yvel ≈ 0`
+  means you let go right at the peak, `-` = still gaining height, `+` = falling.
 - `Repress` - if you repress jump in order to get float, show how long the repress took
