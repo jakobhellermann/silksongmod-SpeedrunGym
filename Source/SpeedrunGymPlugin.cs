@@ -1,25 +1,34 @@
 using System;
+using System.Collections;
 using BepInEx;
 using HarmonyLib;
 using HutongGames.PlayMaker;
+using Silksong.AssetHelper.ManagedAssets;
 using SpeedrunGym.Source.Moves;
 using SpeedrunGym.Source.WorldToasts;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace SpeedrunGym.Source;
 
 [BepInAutoPlugin("io.github.jakobhellermann.speedrungym")]
+[BepInDependency("org.silksong-modding.assethelper")]
 public partial class SpeedrunGymPlugin : BaseUnityPlugin {
     private Harmony harmony = null!;
     private WorldToastManager worldToasts = null!;
+    private TrainingDummy trainingDummy = new();
+
+    private static SpeedrunGymPlugin instance = null!;
 
     private void Awake() {
+        instance = this;
         Log.Init(Logger);
         Log.Info($"Plugin {Name} ({Id}) has loaded!");
 
         ForceCrawPogo.BindConfig(Config);
         PogoEndlagDetector.BindConfig(Config);
         JumpTimingDetector.BindConfig(Config);
+        trainingDummy.BindConfig(Config);
 
         WorldToastManager.MaxAge = Config.Bind("Toasts", "Lifetime seconds", 3f,
             "How long feedback popups stay on screen before fading out.").Value;
@@ -38,6 +47,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         try {
             PogoEndlagDetector.LateUpdate();
             JumpTimingDetector.LateUpdate();
+            trainingDummy.LateUpdate();
             worldToasts.Update();
         } catch (Exception e) {
             Log.Error($"Error during LateUpdate: {e}");
@@ -52,6 +62,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
             harmony.UnpatchSelf();
             ForceCrawPogo.Cleanup();
             worldToasts.Destroy();
+            trainingDummy.Dispose();
         } catch (Exception e) {
             Log.Info($"Plugin {Name} ({Id}) failed to clean up: {e}");
         }
@@ -67,6 +78,10 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         } catch (Exception e) {
             Log.Error($"Error during OnSceneLoaded: {e}");
         }
+    }
+    
+    internal new static void StartCoroutine(IEnumerator coroutine) {
+        ((MonoBehaviour)instance).StartCoroutine(coroutine);
     }
 }
 
