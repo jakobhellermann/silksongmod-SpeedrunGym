@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.4.0
+
+- Add shortcut to spawn a neutralized grand reed as a training dummy
+
 ## 0.3.0
 
 - Jump timing popups: sprintjump release velocity and jump repress timing.
