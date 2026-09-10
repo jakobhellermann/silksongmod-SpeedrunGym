@@ -48,13 +48,15 @@
       },
       "Silksong.AssetHelper": {
         "type": "Direct",
-        "requested": "[1.0.0, )",
-        "resolved": "1.0.0",
-        "contentHash": "53mNGEsiqYTq2cI6ikNb8sp6yyeU7dyRuCcugOu3gisTfpvqpY3QMvMSOnM7bxkCiO7/Ire20gQ5cE522J+PXQ==",
+        "requested": "[1.3.2, )",
+        "resolved": "1.3.2",
+        "contentHash": "YA1Um6j+gcA4aciZEDEwR9huiGMhMoajPiHFzG/iR/YiDJIz5oV9Np/3ZBH05dhv72bTK7mhxal/sLVhh5bYGA==",
         "dependencies": {
+          "AssetHelperLib": "0.12.1",
+          "AssetsTools.NET": "3.0.4",
           "BepInEx.Core": "5.4.21",
           "HarmonyX": "2.9.0",
-          "MonoDetour": "0.7.9",
+          "MonoDetour": "0.7.13",
           "UnityEngine.Modules": "6000.0.50"
         }
       },
@@ -69,6 +71,19 @@
         "requested": "[6000.0.50, )",
         "resolved": "6000.0.50",
         "contentHash": "hEFz1r4NGzeYXPY2yPh+/btcnwVB6EnEeRjDMCVNi19PD7VvRMvJeu46x1dNH9jYkT0B/ZXuyMBYiuI7YlRnKw=="
+      },
+      "AssetHelperLib": {
+        "type": "Transitive",
+        "resolved": "0.12.1",
+        "contentHash": "LyuSu1+2zG7B5fa7PMHVVBPQGyPD2SXL2ARr+sJCB77r3guDHu1PkviRIW81M+ZR2km7k1aZisoUhPBxfreabg==",
+        "dependencies": {
+          "AssetsTools.NET": "3.0.4"
+        }
+      },
+      "AssetsTools.NET": {
+        "type": "Transitive",
+        "resolved": "3.0.4",
+        "contentHash": "NqYy5UIucwKwdkpamFTi8lr53hD+V8qQmbHzztQj1v4Pq1G4TjNlpkUWOhktTLBqBm4aPRaAkpFgB+3TDEuomw=="
       },
       "BepInEx.BaseLib": {
         "type": "Transitive",
@@ -92,8 +107,8 @@
       },
       "MonoDetour": {
         "type": "Transitive",
-        "resolved": "0.7.9",
-        "contentHash": "vTYpJxV51Tsjrycjt04bEGrKMIQqa/c8wf+KpqF2JhXu19ijG8k4cMeT2bXAOqCuy6e/7gn1eaBNM8yQKP847Q==",
+        "resolved": "0.7.13",
+        "contentHash": "A1v0WMKfTbRv3O1l6Myel56AGWfC1SRaXvkXqhLgHL31sttxwMww/ncJS9jpsclqs4hPx8zqcM29AkrqM8WDAg==",
         "dependencies": {
           "MonoMod.RuntimeDetour": "21.12.13.1"
         }
