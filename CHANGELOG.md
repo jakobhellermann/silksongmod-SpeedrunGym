@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.4.1
+
+- Fix training dummies sometimes re-gaining contact damage on harpoon
 
 ## 0.4.0
 
