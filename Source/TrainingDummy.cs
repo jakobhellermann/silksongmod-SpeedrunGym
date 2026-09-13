@@ -173,7 +173,17 @@ public class TrainingDummy : IDisposable {
 }
 
 [HarmonyPatch]
-public class PreventTrainingDummyDamage {
+public class Patches {
+    // Harpoon disables/enables DamageHero
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(DamageHero), nameof(DamageHero.ToggleDamaged))]
+    private static bool PreventDamageHeroInDummy(DamageHero damageHero, bool enabled) {
+        if (!damageHero || !damageHero.GetComponentInParent<TrainingDummyBehaviour>()) return true;
+        if (TrainingDummy.ContactDamageMode == DummyContactDamage.Off) return false;
+
+        return true;
+    }
+    
     [HarmonyPrefix]
     [HarmonyPatch(typeof(HeroController), nameof(HeroController.TakeDamage))]
     private static void PreventTakeDamage(HeroController __instance, GameObject go, ref bool __state) {
