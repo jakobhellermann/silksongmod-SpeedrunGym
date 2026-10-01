@@ -90,9 +90,9 @@ public class TrainingDummy : IDisposable {
     private readonly List<TrainingDummyBehaviour> spawnedDummies = [];
 
     internal void BindConfig(ConfigFile config) {
-        spawnDummyShortcut = config.Bind(Section, "Spawn training dummy", new KeyboardShortcut(),
+        spawnDummyShortcut = config.Bind(Section, "Spawn training dummy", KeyboardShortcut.Empty,
             "Spawn a grand reed as target practice.");
-        despawnDummiesShortcut = config.Bind(Section, "Despawn training dummies", new KeyboardShortcut(),
+        despawnDummiesShortcut = config.Bind(Section, "Despawn training dummies", KeyboardShortcut.Empty,
             "Despawn all training dummies.");
         contactDamage = config.Bind(Section, "Contact damage", DummyContactDamage.EffectOnly,
             "Off: No damage. EffectOnly: knockback etc. Damage: regular contact damage.");
