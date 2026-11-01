@@ -27,6 +27,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         ForceCrawPogo.BindConfig(Config);
         PogoEndlagDetector.BindConfig(Config);
         JumpTimingDetector.BindConfig(Config);
+        SilkWasteDetector.BindConfig(Config);
         trainingDummy.BindConfig(Config);
 
         WorldToastManager.MaxAge = Config.Bind("Toasts", "Lifetime seconds", 3f,

@@ -39,6 +39,10 @@ Two independently toggleable air-jump readouts, shown as popups next to Hornet.
   means you let go right at the peak, `-` = still gaining height, `+` = falling.
 - `Repress` - if you repress jump in order to get float, show how long the repress took
 
+## Silk Waste
+
+Shows a `silk wasted` popup when a hit would have generated silk while your spool is already full.
+
 ## Training Dummy
 
 Spawns a neutralized grand reed next to Hornet as a training dummy.
