@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -25,6 +26,7 @@ internal class WorldToastManager {
     private const float BackdropAlpha = 0.5f;
     private const int DefaultFontSize = 10;
     private const float ScreenMargin = 40f; // keep clamped toasts this far inside the canvas edges
+    private const float StackGap = 2f;
 
     private static WorldToastManager? instance;
 
@@ -132,6 +134,37 @@ internal class WorldToastManager {
             entry.Text.color = new Color(entry.Color.r, entry.Color.g, entry.Color.b, entry.Color.a * alpha);
             entry.Backdrop.color = new Color(0, 0, 0, BackdropAlpha * alpha);
             entries[i] = entry;
+        }
+
+        StackClamped();
+    }
+
+    // Clamped toasts all land on the same edge point; stack them by age, oldest at the edge (its anchor is furthest
+    // off-screen), newer ones further in. A toast drifting into the stack rests on top of it, so it is already in place
+    // once it gets clamped instead of passing through and jumping.
+    private void StackClamped() {
+        var canvasCenterY = canvas.GetComponent<RectTransform>().rect.center.y;
+        var placed = new List<Rect>();
+        foreach (var entry in entries.OrderByDescending(e => e.Clamped).ThenBy(e => e.StartTime)) {
+            var rt = entry.Go.GetComponent<RectTransform>();
+            Vector2 pos = rt.localPosition;
+            var size = rt.rect.size;
+            var down = pos.y >= canvasCenterY;
+
+            var moved = false;
+            var overlapping = true;
+            while (overlapping) {
+                overlapping = false;
+                foreach (var other in placed) {
+                    if (!new Rect(pos - size / 2, size).Overlaps(other)) continue;
+                    pos.y = down ? other.yMin - StackGap - size.y / 2 : other.yMax + StackGap + size.y / 2;
+                    overlapping = moved = true;
+                }
+            }
+
+            if (!entry.Clamped && !moved) continue;
+            rt.localPosition = pos;
+            placed.Add(new Rect(pos - size / 2, size));
         }
     }
 
