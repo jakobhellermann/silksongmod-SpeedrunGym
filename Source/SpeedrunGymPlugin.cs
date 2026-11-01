@@ -27,6 +27,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         ForceCrawPogo.BindConfig(Config);
         PogoEndlagDetector.BindConfig(Config);
         JumpTimingDetector.BindConfig(Config);
+        WallJumpDetector.BindConfig(Config);
         SilkWasteDetector.BindConfig(Config);
         trainingDummy.BindConfig(Config);
 
@@ -46,6 +47,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
     private void LateUpdate() {
         try {
             PogoEndlagDetector.LateUpdate();
+            WallJumpDetector.LateUpdate(); // before JumpTimingDetector, which skips presses it claims
             JumpTimingDetector.LateUpdate();
             trainingDummy.LateUpdate();
             worldToasts.Update();
@@ -75,6 +77,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         try {
             WorldToastManager.ClearAll();
             ForceCrawPogo.OnSceneLoaded();
+            WallJumpDetector.Reset();
         } catch (Exception e) {
             Log.Error($"Error during OnSceneLoaded: {e}");
         }

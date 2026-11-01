@@ -43,6 +43,22 @@ Two independently toggleable air-jump readouts, shown as popups next to Hornet.
 
 Shows a `silk wasted` popup when a hit would have generated silk while your spool is already full.
 
+## Queued Walljump
+
+When enabled, display why queued walljumps failed, or how close to optimal they were.
+
+Possible popup messages:
+
+- `QWJ +0ms` - perfectly pressed at the earliest option
+- `QWJ +21ms` - pressed 21ms after QWJ became possible
+- `QWJ +35ms queued 9ms` - the QWJ waited 8ms before firing (usually out of your control?)
+- `QWJ 10ms early` - jump was pressed 10ms before the wall came within reach
+- `QWJ 0.05u too far` - jump was pressed too early and wall never came within reach
+- `QWJ 28ms late, window 21ms` - jump was pressed 28ms after last possible frame. You had a 21ms window.
+- `QWJ no direction` - jump would have worked if you hadn't pressed neutral
+- `QWJ 18ms late, window 34ms, touching non-slider` - window ended because you're touching a slope
+- `WJ +62ms (conntect +32ms)` - regular walljump, 62ms after QWJ became possibile, wall contact 32ms
+
 ## Training Dummy
 
 Spawns a neutralized grand reed next to Hornet as a training dummy.

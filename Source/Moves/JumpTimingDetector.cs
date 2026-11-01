@@ -80,7 +80,7 @@ internal static class JumpTimingDetector {
         else if (!prevPressed && pressed && released is { } r) {
             var delta = now - r;
             released = null;
-            if (repress.Value && delta.Ms <= ResetMs)
+            if (repress.Value && delta.Ms <= ResetMs && !WallJumpDetector.ClaimedPress)
                 HeroToast(hero, $"repress +{Discount(delta)}", Color, heightOffset: 1.2f);
         }
         else if (released is { } stale && (now - stale).Ms > ResetMs) {
