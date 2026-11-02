@@ -49,7 +49,7 @@ When enabled, display why queued walljumps failed, or how close to optimal they 
 
 Possible popup messages:
 
-- `QWJ +0ms` - perfectly pressed at the earliest option
+- `QWJ +0ms` - perfectly pressed at the earliest frame
 - `QWJ +21ms` - pressed 21ms after QWJ became possible
 - `QWJ +35ms queued 9ms` - the QWJ waited 8ms before firing (usually out of your control?)
 - `QWJ 10ms early` - jump was pressed 10ms before the wall came within reach
