@@ -57,7 +57,7 @@ Possible popup messages:
 - `QWJ 28ms late, window 21ms` - jump was pressed 28ms after last possible frame. You had a 21ms window.
 - `QWJ no direction` - jump would have worked if you hadn't pressed neutral
 - `QWJ 18ms late, window 34ms, touching non-slider` - window ended because you're touching a slope
-- `WJ +62ms (conntect +32ms)` - regular walljump, 62ms after QWJ became possibile, wall contact 32ms
+- `WJ +62ms (contact +32ms)` - regular walljump, 62ms after QWJ became possibile, wall contact 32ms
 
 ## Training Dummy
 
