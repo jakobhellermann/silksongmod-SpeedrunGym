@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.0
+
+- Add option for silk waste toasts
+- Add option for walljump timings
+
 ## 0.4.1
 
 - Fix training dummies sometimes re-gaining contact damage on harpoon
