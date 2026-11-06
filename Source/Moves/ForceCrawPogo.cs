@@ -27,7 +27,9 @@ internal static class ForceCrawPogo {
     private static int[] origMissedMax = [];
 
     internal static void BindConfig(ConfigFile config) {
-        mode = config.Bind("Normalization", "Force craw pogo", Mode.Normal,
+        mode = config.Bind("Normalization",
+            "Force craw pogo",
+            Mode.Normal,
             "Force how often the craw in Greymoor_15 flaps before diving.");
         mode.SettingChanged += (_, _) => {
             decisionCount = 0;
@@ -48,9 +50,9 @@ internal static class ForceCrawPogo {
 
     private static void Restore() {
         if (patchedAction is null) return;
-        for (var i = 0; i < origWeights.Length; i++) patchedAction.weights[i].Value = origWeights[i];
-        for (var i = 0; i < origEventMax.Length; i++) patchedAction.eventMax[i].Value = origEventMax[i];
-        for (var i = 0; i < origMissedMax.Length; i++) patchedAction.missedMax[i].Value = origMissedMax[i];
+        for (int i = 0; i < origWeights.Length; i++) patchedAction.weights[i].Value = origWeights[i];
+        for (int i = 0; i < origEventMax.Length; i++) patchedAction.eventMax[i].Value = origEventMax[i];
+        for (int i = 0; i < origMissedMax.Length; i++) patchedAction.missedMax[i].Value = origMissedMax[i];
         patchedAction = null;
     }
 
@@ -64,8 +66,8 @@ internal static class ForceCrawPogo {
 
         if (Array.Find(state.Actions, a => a is SendRandomEventV4) is not SendRandomEventV4 action) return;
 
-        var attackIndex = Array.FindIndex(action.events, e => e.Name == "ATTACK");
-        var shiftIndex = Array.FindIndex(action.events, e => e.Name == "SHIFT");
+        int attackIndex = Array.FindIndex(action.events, e => e.Name == "ATTACK");
+        int shiftIndex = Array.FindIndex(action.events, e => e.Name == "SHIFT");
         if (attackIndex < 0 || shiftIndex < 0) return;
 
         // Capture the authored values once per action instance (before we clobber them) so
@@ -77,23 +79,23 @@ internal static class ForceCrawPogo {
             origMissedMax = Array.ConvertAll(action.missedMax, m => m.Value);
         }
 
-        var target = mode.Value switch {
+        int target = mode.Value switch {
             Mode.Early => 1,
             Mode.Late1 => 2,
             Mode.Late2 => 3,
-            _ => 0
+            _ => 0,
         };
 
         decisionCount++;
-        var forceAttack = decisionCount >= target;
+        bool forceAttack = decisionCount >= target;
         Log.Info(
             $"[craw] normalize flap-move decision #{decisionCount} (target {target}) -> {(forceAttack ? "ATTACK" : "SHIFT")}");
         if (forceAttack) decisionCount = 0;
 
         // Make the random choice deterministic: only the desired event keeps weight, and the
         // eventMax / missedMax guards never fire so the weighted pick always wins.
-        var wantIndex = forceAttack ? attackIndex : shiftIndex;
-        for (var i = 0; i < action.weights.Length; i++)
+        int wantIndex = forceAttack ? attackIndex : shiftIndex;
+        for (int i = 0; i < action.weights.Length; i++)
             action.weights[i].Value = i == wantIndex ? 1f : 0f;
         foreach (var max in action.eventMax) max.Value = int.MaxValue;
         foreach (var max in action.missedMax) max.Value = int.MaxValue;
@@ -103,6 +105,6 @@ internal static class ForceCrawPogo {
         Normal,
         Early, // attack on the 1st decision
         Late1, // attack on the 2nd decision
-        Late2 // attack on the 3rd decision
+        Late2, // attack on the 3rd decision
     }
 }

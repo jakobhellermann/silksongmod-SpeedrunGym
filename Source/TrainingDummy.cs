@@ -7,7 +7,6 @@ using HarmonyLib;
 using Silksong.AssetHelper.ManagedAssets;
 using UnityEngine;
 using Object = UnityEngine.Object;
-using Vector3 = UnityEngine.Vector3;
 
 namespace SpeedrunGym.Source;
 
@@ -22,11 +21,11 @@ public class TrainingDummyBehaviour : MonoBehaviour {
     private const int Hp = 10000;
     private const int RefillBelowHp = 1000;
 
-    private HealthManager healthManager = null!;
-    private Recoil recoil = null!;
+    private DamageHero[] damageHeroes = null!;
     private float defaultRecoilSpeed;
 
-    private DamageHero[] damageHeroes = null!;
+    private HealthManager healthManager = null!;
+    private Recoil recoil = null!;
 
     private void Awake() {
         healthManager = GetComponent<HealthManager>();
@@ -76,25 +75,37 @@ public class TrainingDummy : IDisposable {
     private const string Section = "Training Dummy";
     private const int SpawnOffset = 4;
 
-    private readonly ManagedAsset<GameObject> trainingDummyAsset = ManagedAsset<GameObject>.FromSceneAsset(
-        sceneName: "Song_25",
-        objPath: "Black Thread States/Normal World/Song Reed Grand (2)");
-
     private static ConfigEntry<KeyboardShortcut> spawnDummyShortcut = null!;
     private static ConfigEntry<KeyboardShortcut> despawnDummiesShortcut = null!;
     private static ConfigEntry<DummyContactDamage> contactDamage = null!;
     private static ConfigEntry<bool> takeKnockback = null!;
 
-    internal static DummyContactDamage ContactDamageMode => contactDamage.Value;
-
     private readonly List<TrainingDummyBehaviour> spawnedDummies = [];
 
+    private readonly ManagedAsset<GameObject> trainingDummyAsset = ManagedAsset<GameObject>.FromSceneAsset(
+        "Song_25",
+        "Black Thread States/Normal World/Song Reed Grand (2)");
+
+    internal static DummyContactDamage ContactDamageMode => contactDamage.Value;
+
+    public void Dispose() {
+        GC.SuppressFinalize(this);
+        trainingDummyAsset.Unload();
+        DespawnTrainingDummies();
+    }
+
     internal void BindConfig(ConfigFile config) {
-        spawnDummyShortcut = config.Bind(Section, "Spawn training dummy", KeyboardShortcut.Empty,
+        spawnDummyShortcut = config.Bind(Section,
+            "Spawn training dummy",
+            KeyboardShortcut.Empty,
             "Spawn a grand reed as target practice.");
-        despawnDummiesShortcut = config.Bind(Section, "Despawn training dummies", KeyboardShortcut.Empty,
+        despawnDummiesShortcut = config.Bind(Section,
+            "Despawn training dummies",
+            KeyboardShortcut.Empty,
             "Despawn all training dummies.");
-        contactDamage = config.Bind(Section, "Contact damage", DummyContactDamage.EffectOnly,
+        contactDamage = config.Bind(Section,
+            "Contact damage",
+            DummyContactDamage.EffectOnly,
             "Off: No damage. EffectOnly: knockback etc. Damage: regular contact damage.");
         takeKnockback = config.Bind(Section, "Take knockback", false, "Whether the training dummy takes knockback.");
 
@@ -131,14 +142,17 @@ public class TrainingDummy : IDisposable {
         dummy.SetTakesKnockback(takeKnockback.Value);
 
         // spawn standing on the ground beside the hero
-        var spawnX = hero.transform.position.x + (hero.cState.facingRight ? 1f : -1f) * SpawnOffset;
-        var groundY = hero.transform.position.y;
-        var groundHit = Physics2D.Raycast(new Vector2(spawnX, hero.transform.position.y), Vector2.down, 30f,
+        float spawnX = hero.transform.position.x + (hero.cState.facingRight ? 1f : -1f) * SpawnOffset;
+        float groundY = hero.transform.position.y;
+        var groundHit = Physics2D.Raycast(new(spawnX, hero.transform.position.y),
+            Vector2.down,
+            30f,
             LayerMask.GetMask("Terrain"));
         if (groundHit.collider) groundY = groundHit.point.y;
         var rest = go.transform.Find("Rest Collider").GetComponent<BoxCollider2D>();
-        var bottomLocalY = rest.offset.y - rest.size.y * 0.5f;
-        go.transform.position = new Vector3(spawnX, groundY + 0.01f - bottomLocalY * go.transform.localScale.y,
+        float bottomLocalY = rest.offset.y - rest.size.y * 0.5f;
+        go.transform.position = new(spawnX,
+            groundY + 0.01f - bottomLocalY * go.transform.localScale.y,
             go.transform.position.z);
 
         Log.Info("Spawned training dummy");
@@ -164,12 +178,6 @@ public class TrainingDummy : IDisposable {
             DespawnTrainingDummies();
         }
     }
-
-    public void Dispose() {
-        GC.SuppressFinalize(this);
-        trainingDummyAsset.Unload();
-        DespawnTrainingDummies();
-    }
 }
 
 [HarmonyPatch]
@@ -183,7 +191,7 @@ public class Patches {
 
         return true;
     }
-    
+
     [HarmonyPrefix]
     [HarmonyPatch(typeof(HeroController), nameof(HeroController.TakeDamage))]
     private static void PreventTakeDamage(HeroController __instance, GameObject go, ref bool __state) {

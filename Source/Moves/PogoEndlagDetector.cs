@@ -25,15 +25,25 @@ internal static class PogoEndlagDetector {
     private static CurrentDownspike? startedDownspike;
 
     internal static void BindConfig(ConfigFile config) {
-        enabled = config.Bind(Section, "Enabled", false,
+        enabled = config.Bind(Section,
+            "Enabled",
+            false,
             "Detect pogo (downspike) endlag cancels and show feedback popups next to Hornet.");
-        showGood = config.Bind(Section, "Show good", true,
+        showGood = config.Bind(Section,
+            "Show good",
+            true,
             "Show a popup on a successful endlag cancel.");
-        slowRepressThresholdMs = config.Bind(Section, "Slow repress threshold", 60f,
+        slowRepressThresholdMs = config.Bind(Section,
+            "Slow repress threshold",
+            60f,
             "Repress slower than this many ms turns the popup yellow.");
-        slowJumpThresholdMs = config.Bind(Section, "Slow jump threshold", 60f,
+        slowJumpThresholdMs = config.Bind(Section,
+            "Slow jump threshold",
+            60f,
             "Jump slower than this many ms turns the popup yellow.");
-        showFrameCounts = config.Bind(Section, "Show frame counts", false,
+        showFrameCounts = config.Bind(Section,
+            "Show frame counts",
+            false,
             "Include the frame count in popups (e.g. '3f (50ms)') instead of just milliseconds.");
     }
 
@@ -44,7 +54,7 @@ internal static class PogoEndlagDetector {
 
         if (hero.cState.shuttleCock) return;
 
-        startedDownspike = new CurrentDownspike();
+        startedDownspike = new();
     }
 
     internal static void OnUpdateState(HeroAnimationController anim, ActorStates newState) {
@@ -58,7 +68,7 @@ internal static class PogoEndlagDetector {
             switch (newState) {
                 case ActorStates.idle:
                     startedDownspike = startedDownspike with {
-                        RelevantInput = now
+                        RelevantInput = now,
                     };
 
                     startedDownspike.Success = true;
@@ -73,7 +83,7 @@ internal static class PogoEndlagDetector {
                         // The state resolves one frame after the input it reflects, so the last
                         // frame you could still be neutral is the previous input frame.
                         NeutralDeadline = startedDownspike.LastInput,
-                        Success = false
+                        Success = false,
                     };
 
                     // Pressed a direction early: report it now. The "held neutral late" case
@@ -91,7 +101,8 @@ internal static class PogoEndlagDetector {
         var hero = HeroController.SilentInstance;
         if (!hero) return;
         WorldToastManager.Show(message,
-            hero.transform.position + Vector3.up * 1.5f + Vector3.right * (hero.cState.facingRight ? 1 : -1), color,
+            hero.transform.position + Vector3.up * 1.5f + Vector3.right * (hero.cState.facingRight ? 1 : -1),
+            color,
             moveUp: false);
     }
 
@@ -107,7 +118,7 @@ internal static class PogoEndlagDetector {
             return;
         }
 
-        var moveInput = InputHandler.SilentInstance.inputActions.MoveVector.Vector.x;
+        float moveInput = InputHandler.SilentInstance.inputActions.MoveVector.Vector.x;
 
         // Track neutral release / first direction press while waiting for the state to resolve.
         if (moveInput == 0)
@@ -120,7 +131,7 @@ internal static class PogoEndlagDetector {
         if (downspike is { RelevantInput: { } relevantInput }) {
             // after relevant frame
             var afterRelevant = FrameTime.Now - relevantInput;
-            var timedOut = afterRelevant.Ms > 300;
+            bool timedOut = afterRelevant.Ms > 300;
 
             if (downspike.Success) {
                 if (!showGood.Value) {
@@ -144,7 +155,7 @@ internal static class PogoEndlagDetector {
 
                 // Wait until both the repress and the jump are captured (either order), or the
                 // window expires — so a jump before the repress still shows both.
-                var bothDone = downspike is { RepressDelta: not null, JumpExecuted: not null };
+                bool bothDone = downspike is { RepressDelta: not null, JumpExecuted: not null };
                 if (!bothDone && !timedOut) return;
 
                 ShowSuccessResult(downspike);
@@ -178,7 +189,7 @@ internal static class PogoEndlagDetector {
     // the player performed within the window.
     private static void ShowSuccessResult(CurrentDownspike d) {
         // Each threshold only flips the popup to yellow; either part being slow colours the whole popup.
-        var slow = false;
+        bool slow = false;
 
         string? repress = null;
         if (d.RepressDelta is { } r) {
@@ -194,29 +205,30 @@ internal static class PogoEndlagDetector {
             jump = $"jump +{delta}";
         }
 
-        var msg = repress is null ? jump : jump is null ? repress : $"{repress}\n{jump}";
+        string? msg = repress is null ? jump : jump is null ? repress : $"{repress}\n{jump}";
         if (msg is not null) HeroToast(msg, slow ? SlowColor : GoodColor);
     }
 
     internal record struct FrameTime {
-        private int frame;
         private float Time;
+        private int frame;
 
-        public static FrameTime Now => new()
-            { frame = UnityEngine.Time.frameCount, Time = UnityEngine.Time.realtimeSinceStartup };
+        public static FrameTime Now => new() {
+            frame = UnityEngine.Time.frameCount,
+            Time = UnityEngine.Time.realtimeSinceStartup,
+        };
 
-        public static FrameTimeDelta operator -(FrameTime a, FrameTime b) {
-            return new FrameTimeDelta { Frames = a.frame - b.frame, Ms = (a.Time - b.Time) * 1000f };
-        }
+        public static FrameTimeDelta operator -(FrameTime a, FrameTime b) => new() {
+            Frames = a.frame - b.frame,
+            Ms = (a.Time - b.Time) * 1000f,
+        };
     }
 
     internal record struct FrameTimeDelta {
         public int Frames;
         public float Ms;
 
-        public override string ToString() {
-            return showFrameCounts.Value ? $"{Frames}f ({Ms:0}ms)" : $"{Ms:0}ms";
-        }
+        public override string ToString() => showFrameCounts.Value ? $"{Frames}f ({Ms:0}ms)" : $"{Ms:0}ms";
     }
 
     private record CurrentDownspike {

@@ -32,7 +32,6 @@ internal enum QwjBlock {
 
 internal static class WallJumpDetector {
     private const string Section = "Walljump";
-    private static ConfigEntry<bool> enabled = null!;
 
     private const float TooFarStep = 0.05f;
     private const float MaxTooFar = 3f;
@@ -41,6 +40,7 @@ internal static class WallJumpDetector {
     private const float LateWindowMs = 200f;
     private const float WallJumpMaxLatenessMs = 150f;
     private const int WallLayerMask = 8448; // Terrain + layer 13, as in HeroController.IsFacingNearWall
+    private static ConfigEntry<bool> enabled = null!;
 
     private static readonly Color GoodColor = new(0.4f, 1f, 0.4f);
     private static readonly Color SlowColor = new(1f, 1f, 0.4f);
@@ -57,15 +57,15 @@ internal static class WallJumpDetector {
 
     // Per-frame events from the HeroController patches, consumed in LateUpdate.
     private static bool wallJumpedThisFrame;
+    private static bool inTryDoWallJumpFromMove;
 
     // This frame's jump press is a walljump or gets a walljump popup, so other jump popups skip it.
     internal static bool ClaimedPress { get; private set; }
-    private static bool inTryDoWallJumpFromMove;
 
     internal static void BindConfig(ConfigFile config) {
         enabled = config.Bind(Section, "Enabled", false, "Show walljump timing popups");
     }
-    
+
     internal static void PreHeroUpdate(HeroController hero) {
         if (!enabled.Value) return;
 
@@ -79,7 +79,7 @@ internal static class WallJumpDetector {
             return;
         }
 
-        var touching = hero.cState.touchingWall || hero.cState.wallSliding;
+        bool touching = hero.cState.touchingWall || hero.cState.wallSliding;
         if (touching) contactSince ??= now;
         else contactSince = null;
 
@@ -93,7 +93,8 @@ internal static class WallJumpDetector {
                 var early = now - pressedAt;
                 if (early.Ms <= EarlyWindowMs) HeroToast(hero, $"QWJ {early} early", FailColor);
             }
-        } else if (!touching) {
+        }
+        else if (!touching) {
             if (possibleSince is { } since && lastPossible is { } last) closedWindow = (since, last, now, block.Value);
             possibleSince = null;
             lastPossible = null;
@@ -122,15 +123,16 @@ internal static class WallJumpDetector {
         var now = FrameTime.Now;
 
         if (inTryDoWallJumpFromMove && queued is var (queuedAt, late)) {
-            var message = $"QWJ +{late}";
+            string message = $"QWJ +{late}";
             var waited = now - queuedAt;
             if (waited.Frames > 0) message += $" queued {waited}";
             HeroToast(hero, message, late.Frames == 0 ? GoodColor : SlowColor);
-        } else {
+        }
+        else {
             var sincePossible = possibleSince is { } since ? now - since : (FrameTimeDelta?)null;
             var sinceContact = contactSince is { } contact ? now - contact : (FrameTimeDelta?)null;
             if ((sincePossible ?? sinceContact) is { } lateness && lateness.Ms < WallJumpMaxLatenessMs) {
-                var message = sincePossible is { } p ? $"WJ +{p}" : "WJ";
+                string message = sincePossible is { } p ? $"WJ +{p}" : "WJ";
                 if (sinceContact is { } c) message += $" (contact +{c})";
                 HeroToast(hero, message, SlowColor);
             }
@@ -149,7 +151,7 @@ internal static class WallJumpDetector {
         var input = InputHandler.SilentInstance;
         if (!hero || input == null) return;
 
-        var pressed = input.inputActions.Jump.WasPressed;
+        bool pressed = input.inputActions.Jump.WasPressed;
         if (pressed && !hero.cState.onGround && hero.playerData.hasWalljump) {
             // A queued or performed walljump gets reported when it fires (OnWallJump).
             ClaimedPress = hero.queuedWallJumpInterrupt || wallJumpedThisFrame || ReportMissedQwj(hero, input);
@@ -167,19 +169,23 @@ internal static class WallJumpDetector {
     private static bool ReportMissedQwj(HeroController hero, InputHandler input) {
         var now = FrameTime.Now;
         if (possibleSince is not null) {
-            var frozenInput = Mathf.Abs(hero.move_input) <= Mathf.Epsilon
-                              && Mathf.Abs(HeldDirection(input)) > Mathf.Epsilon;
-            HeroToast(hero, $"QWJ not queued, {(frozenInput ? "move_input 0 while held" : "jump went elsewhere")}",
+            bool frozenInput = Mathf.Abs(hero.move_input) <= Mathf.Epsilon
+                && Mathf.Abs(HeldDirection(input)) > Mathf.Epsilon;
+            HeroToast(hero,
+                $"QWJ not queued, {(frozenInput ? "move_input 0 while held" : "jump went elsewhere")}",
                 FailColor);
-        } else if (FindQwjBlock(hero) == QwjBlock.NoDirection) {
+        }
+        else if (FindQwjBlock(hero) == QwjBlock.NoDirection) {
             HeroToast(hero, "QWJ: no direction", FailColor);
-        } else if (closedWindow is var (since, last, closed, reason) && (now - closed).Ms <= LateWindowMs) {
+        }
+        else if (closedWindow is var (since, last, closed, reason) && (now - closed).Ms <= LateWindowMs) {
             // Visible in the walljump debug rays, so not repeated.
-            var shownReason = reason is QwjBlock.CenterRayMissed or QwjBlock.NonSliderWall
+            string shownReason = reason is QwjBlock.CenterRayMissed or QwjBlock.NonSliderWall
                 ? ""
                 : $", {Describe(reason)}";
             HeroToast(hero, $"QWJ {now - last} late, window {closed - since}{shownReason}", FailColor);
-        } else {
+        }
+        else {
             // Reported later, once a wall comes in range or the early window runs out.
             earlyPress = (now, WallDistanceBeyondRange(hero));
             return false;
@@ -204,7 +210,7 @@ internal static class WallJumpDetector {
         if (!hero.playerData.hasWalljump) return QwjBlock.NoWalljump;
         if (hero.cState.touchingNonSlider) return QwjBlock.TouchingNonSlider;
 
-        var range = hero.WALLJUMP_BROLLY_RAY_LENGTH;
+        float range = hero.WALLJUMP_BROLLY_RAY_LENGTH;
         var direction = hero.cState.facingRight ? Vector2.right : Vector2.left;
         if (!Helper.IsRayHittingNoTriggers(hero.transform.position, direction, range, WallLayerMask, out var hit))
             return QwjBlock.CenterRayMissed;
@@ -213,7 +219,7 @@ internal static class WallJumpDetector {
         if (!hero.IsFacingNearWall(hero.cState.facingRight, range, Color.green)) return QwjBlock.WallTooShort;
 
         if (hero.dashingDown) return QwjBlock.DashingDown;
-        var chained = hero.wallLocked || hero.wallJumpChainStepsLeft > 0;
+        bool chained = hero.wallLocked || hero.wallJumpChainStepsLeft > 0;
         if (!chained && Mathf.Abs(HeldDirection(InputHandler.SilentInstance)) <= Mathf.Epsilon)
             return QwjBlock.NoDirection;
 
@@ -233,8 +239,8 @@ internal static class WallJumpDetector {
 
     // How far beyond WALLJUMP_BROLLY_RAY_LENGTH the wall in front is, if within MaxTooFar.
     private static float? WallDistanceBeyondRange(HeroController hero) {
-        var range = hero.WALLJUMP_BROLLY_RAY_LENGTH;
-        for (var extra = TooFarStep; extra <= MaxTooFar; extra += TooFarStep) {
+        float range = hero.WALLJUMP_BROLLY_RAY_LENGTH;
+        for (float extra = TooFarStep; extra <= MaxTooFar; extra += TooFarStep) {
             if (hero.IsFacingNearWall(hero.cState.facingRight, range + extra, Color.green)) return extra;
         }
 
@@ -247,7 +253,8 @@ internal static class WallJumpDetector {
     private static void HeroToast(HeroController hero, string message, Color color) {
         WorldToastManager.Show(message,
             hero.transform.position + Vector3.up * 1.5f + Vector3.right * (hero.cState.facingRight ? -1 : 1),
-            color, moveUp: false);
+            color,
+            moveUp: false);
     }
 }
 

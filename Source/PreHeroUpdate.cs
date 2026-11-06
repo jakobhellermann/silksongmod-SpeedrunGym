@@ -7,7 +7,7 @@ namespace SpeedrunGym.Source;
 [DefaultExecutionOrder(HeroExecutionOrder - 1)]
 internal class PreHeroUpdate : MonoBehaviour {
     private const int HeroExecutionOrder = 208;
-    
+
     private void Update() {
         try {
             var hero = HeroController.SilentInstance;

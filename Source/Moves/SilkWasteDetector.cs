@@ -12,14 +12,16 @@ internal static class SilkWasteDetector {
     private static readonly Color Color = new(1f, 0.4f, 0.4f);
 
     internal static void BindConfig(ConfigFile config) {
-        enabled = config.Bind("Silk Waste", "Enabled", false,
+        enabled = config.Bind("Silk Waste",
+            "Enabled",
+            false,
             "Show a popup when a hit would generate silk while the silk spool is already full.");
     }
 
     internal static void OnSilkGain(HeroController hero, HitInstance hitInstance) {
         if (!enabled.Value) return;
 
-        var generates = hitInstance.SilkGeneration switch {
+        bool generates = hitInstance.SilkGeneration switch {
             HitSilkGeneration.Full => true,
             HitSilkGeneration.FirstHit => hitInstance.IsFirstHit,
             _ => false,
@@ -29,7 +31,8 @@ internal static class SilkWasteDetector {
 
         WorldToastManager.Show("silk wasted",
             hero.transform.position + Vector3.up * 1.2f + Vector3.right * (hero.cState.facingRight ? -1 : 1),
-            Color, moveUp: false);
+            Color,
+            moveUp: false);
     }
 }
 

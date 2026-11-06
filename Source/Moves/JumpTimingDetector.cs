@@ -16,20 +16,24 @@ namespace SpeedrunGym.Source.Moves;
 // State resets on the ground or a dash, and a pending release is dropped if no repress arrives in time.
 internal static class JumpTimingDetector {
     private const string Section = "Jump Timing";
+    private const float ResetMs = 250f; // drop a pending release if no repress arrives within this window
     private static ConfigEntry<bool> repress = null!;
     private static ConfigEntry<bool> sprintjumpRelease = null!;
 
     private static readonly Color Color = new(0.4f, 1f, 0.4f);
-    private const float ResetMs = 250f; // drop a pending release if no repress arrives within this window
 
     private static bool prevPressed;
     private static FrameTime? released; // when the button was let go, awaiting a repress
     private static bool shuttlecockActive; // a dashjump is in flight; gates the release-yvel popup
 
     internal static void BindConfig(ConfigFile config) {
-        repress = config.Bind(Section, "Repress", false,
+        repress = config.Bind(Section,
+            "Repress",
+            false,
             "Report how long each air jump repress took (release → re-press) in a popup next to Hornet.");
-        sprintjumpRelease = config.Bind(Section, "Sprintjump Release", false,
+        sprintjumpRelease = config.Bind(Section,
+            "Sprintjump Release",
+            false,
             "Out of a dashjump (shuttlecock), report the vertical velocity at the moment jump was released.");
     }
 
@@ -53,7 +57,7 @@ internal static class JumpTimingDetector {
         var input = InputHandler.SilentInstance;
         if (input == null) return;
 
-        var pressed = input.inputActions.Jump.IsPressed;
+        bool pressed = input.inputActions.Jump.IsPressed;
 
         // Reset while grounded or dashing: only air represses matter, a ground release must not pair with
         // a later press, and a jump out of a dash (shuttlecock → release → dash → jump) is not a repress.
@@ -73,7 +77,7 @@ internal static class JumpTimingDetector {
             // rb.velocity.y convention on request: shown − = rising, + = falling.
             if (shuttlecockActive) {
                 if (sprintjumpRelease.Value)
-                    HeroToast(hero, $"release yvel={-YVel(hero):+0.0;-0.0}", Color, heightOffset: 1.9f);
+                    HeroToast(hero, $"release yvel={-YVel(hero):+0.0;-0.0}", Color, 1.9f);
                 shuttlecockActive = false;
             }
         }
@@ -81,7 +85,7 @@ internal static class JumpTimingDetector {
             var delta = now - r;
             released = null;
             if (repress.Value && delta.Ms <= ResetMs && !WallJumpDetector.ClaimedPress)
-                HeroToast(hero, $"repress +{Discount(delta)}", Color, heightOffset: 1.2f);
+                HeroToast(hero, $"repress +{Discount(delta)}", Color, 1.2f);
         }
         else if (released is { } stale && (now - stale).Ms > ResetMs) {
             released = null; // repress window elapsed
@@ -99,16 +103,20 @@ internal static class JumpTimingDetector {
     // Drop the one mandatory release frame (you have to let go before you can re-press) without assuming
     // any particular framerate: scale the elapsed time by the frames that remain after removing one.
     private static FrameTimeDelta Discount(FrameTimeDelta delta) {
-        var frames = Math.Max(0, delta.Frames - 1);
-        var ms = delta.Frames > 0 ? delta.Ms * frames / delta.Frames : 0f;
-        return new FrameTimeDelta { Frames = frames, Ms = ms };
+        int frames = Math.Max(0, delta.Frames - 1);
+        float ms = delta.Frames > 0 ? delta.Ms * frames / delta.Frames : 0f;
+        return new() {
+            Frames = frames,
+            Ms = ms,
+        };
     }
 
     private static void HeroToast(HeroController? hero, string message, Color color, float heightOffset) {
         if (!hero) return;
         WorldToastManager.Show(message,
             hero!.transform.position + Vector3.up * heightOffset + Vector3.right * (hero.cState.facingRight ? 1 : -1),
-            color, moveUp: false);
+            color,
+            moveUp: false);
     }
 }
 

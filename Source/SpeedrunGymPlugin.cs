@@ -13,12 +13,11 @@ namespace SpeedrunGym.Source;
 [BepInAutoPlugin("io.github.jakobhellermann.speedrungym")]
 [BepInDependency("org.silksong-modding.assethelper")]
 public partial class SpeedrunGymPlugin : BaseUnityPlugin {
-    private Harmony harmony = null!;
-    private WorldToastManager worldToasts = null!;
-    private PreHeroUpdate preHeroUpdate = null!;
-    private TrainingDummy trainingDummy = new();
-
     private static SpeedrunGymPlugin instance = null!;
+    private Harmony harmony = null!;
+    private PreHeroUpdate preHeroUpdate = null!;
+    private readonly TrainingDummy trainingDummy = new();
+    private WorldToastManager worldToasts = null!;
 
     private void Awake() {
         instance = this;
@@ -32,7 +31,9 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         SilkWasteDetector.BindConfig(Config);
         trainingDummy.BindConfig(Config);
 
-        WorldToastManager.MaxAge = Config.Bind("Toasts", "Lifetime seconds", 3f,
+        WorldToastManager.MaxAge = Config.Bind("Toasts",
+            "Lifetime seconds",
+            3f,
             "How long feedback popups stay on screen before fading out.").Value;
 
         worldToasts = WorldToastManager.Create();
@@ -85,7 +86,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
             Log.Error($"Error during OnSceneLoaded: {e}");
         }
     }
-    
+
     internal static new void StartCoroutine(IEnumerator coroutine) {
         ((MonoBehaviour)instance).StartCoroutine(coroutine);
     }

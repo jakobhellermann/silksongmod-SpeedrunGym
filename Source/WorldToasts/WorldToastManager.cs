@@ -13,29 +13,28 @@ internal record struct WorldToastEntry(
     Vector3 WorldPos,
     Color Color,
     bool Fade,
-    bool MoveUp) {
+    bool MoveUp
+) {
     public bool Clamped; // was the toast clamped to a screen edge last frame (anchor off-screen)?
 }
 
 // Floating text popups anchored to world positions. Inlined from DevUtils so this mod has no
 // runtime dependency on it. The plugin owns the overlay canvas and pumps Update().
 internal class WorldToastManager {
-    internal static float MaxAge = 3f; // toast lifetime in seconds; configurable via the plugin
     private const float FadeFraction = 1f / 3f; // toast holds full opacity, then fades over this last fraction
     private const float FloatSpeed = 0.5f;
     private const float BackdropAlpha = 0.5f;
     private const int DefaultFontSize = 10;
     private const float ScreenMargin = 40f; // keep clamped toasts this far inside the canvas edges
     private const float StackGap = 2f;
+    internal static float MaxAge = 3f; // toast lifetime in seconds; configurable via the plugin
 
     private static WorldToastManager? instance;
 
     private readonly Canvas canvas;
     private readonly List<WorldToastEntry> entries = [];
 
-    private WorldToastManager(Canvas canvas) {
-        this.canvas = canvas;
-    }
+    private WorldToastManager(Canvas canvas) => this.canvas = canvas;
 
     // Create the screen-space overlay canvas + manager. Call once from plugin Awake.
     internal static WorldToastManager Create() {
@@ -44,7 +43,7 @@ internal class WorldToastManager {
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         go.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         Object.DontDestroyOnLoad(go);
-        return instance = new WorldToastManager(canvas);
+        return instance = new(canvas);
     }
 
     // Destroy all live toasts (e.g. on scene change — the canvas is DontDestroyOnLoad, so toasts would
@@ -64,8 +63,14 @@ internal class WorldToastManager {
         if (instance == this) instance = null;
     }
 
-    internal static void Show(string message, Vector3 worldPos, Color? color = null, int fontSize = DefaultFontSize,
-        bool fade = true, bool moveUp = true) {
+    internal static void Show(
+        string message,
+        Vector3 worldPos,
+        Color? color = null,
+        int fontSize = DefaultFontSize,
+        bool fade = true,
+        bool moveUp = true
+    ) {
         instance?.ShowInner(message, worldPos, color, fontSize, fade, moveUp);
     }
 
@@ -78,11 +83,11 @@ internal class WorldToastManager {
         go.transform.SetParent(canvas.transform, false);
 
         var backdrop = go.AddComponent<Image>();
-        backdrop.color = new Color(0, 0, 0, BackdropAlpha);
+        backdrop.color = new(0, 0, 0, BackdropAlpha);
         backdrop.raycastTarget = false;
 
         var layout = go.AddComponent<HorizontalLayoutGroup>();
-        layout.padding = new RectOffset(4, 4, 2, 2);
+        layout.padding = new(4, 4, 2, 2);
         layout.childControlWidth = true;
         layout.childControlHeight = true;
 
@@ -102,21 +107,21 @@ internal class WorldToastManager {
         text.raycastTarget = false;
         text.horizontalOverflow = HorizontalWrapMode.Overflow;
 
-        entries.Add(new WorldToastEntry(go, text, backdrop, Time.time, worldPos, resolvedColor, fade, moveUp));
+        entries.Add(new(go, text, backdrop, Time.time, worldPos, resolvedColor, fade, moveUp));
         UpdatePosition(entries[^1]);
     }
 
     internal void Update() {
-        var now = Time.time;
-        for (var i = entries.Count - 1; i >= 0; i--) {
+        float now = Time.time;
+        for (int i = entries.Count - 1; i >= 0; i--) {
             var entry = entries[i];
 
             // Reset the lifetime only when the toast comes back from off-screen into view, and only if it
             // hasn't started fading out yet — while clamped off-screen (or once fading) it keeps ageing
             // normally and expires after MaxAge like any other.
-            var clamped = UpdatePosition(entry);
-            var age = now - entry.StartTime;
-            var fadeStart = MaxAge * (1f - FadeFraction);
+            bool clamped = UpdatePosition(entry);
+            float age = now - entry.StartTime;
+            float fadeStart = MaxAge * (1f - FadeFraction);
             if (entry.Clamped && !clamped && age < fadeStart) {
                 entry.StartTime = now;
                 age = 0f;
@@ -130,9 +135,9 @@ internal class WorldToastManager {
                 continue;
             }
 
-            var alpha = entry.Fade ? Mathf.Clamp01((MaxAge - age) / (MaxAge * FadeFraction)) : 1f;
-            entry.Text.color = new Color(entry.Color.r, entry.Color.g, entry.Color.b, entry.Color.a * alpha);
-            entry.Backdrop.color = new Color(0, 0, 0, BackdropAlpha * alpha);
+            float alpha = entry.Fade ? Mathf.Clamp01((MaxAge - age) / (MaxAge * FadeFraction)) : 1f;
+            entry.Text.color = new(entry.Color.r, entry.Color.g, entry.Color.b, entry.Color.a * alpha);
+            entry.Backdrop.color = new(0, 0, 0, BackdropAlpha * alpha);
             entries[i] = entry;
         }
 
@@ -143,16 +148,16 @@ internal class WorldToastManager {
     // off-screen), newer ones further in. A toast drifting into the stack rests on top of it, so it is already in place
     // once it gets clamped instead of passing through and jumping.
     private void StackClamped() {
-        var canvasCenterY = canvas.GetComponent<RectTransform>().rect.center.y;
+        float canvasCenterY = canvas.GetComponent<RectTransform>().rect.center.y;
         var placed = new List<Rect>();
         foreach (var entry in entries.OrderByDescending(e => e.Clamped).ThenBy(e => e.StartTime)) {
             var rt = entry.Go.GetComponent<RectTransform>();
             Vector2 pos = rt.localPosition;
             var size = rt.rect.size;
-            var down = pos.y >= canvasCenterY;
+            bool down = pos.y >= canvasCenterY;
 
-            var moved = false;
-            var overlapping = true;
+            bool moved = false;
+            bool overlapping = true;
             while (overlapping) {
                 overlapping = false;
                 foreach (var other in placed) {
@@ -164,7 +169,7 @@ internal class WorldToastManager {
 
             if (!entry.Clamped && !moved) continue;
             rt.localPosition = pos;
-            placed.Add(new Rect(pos - size / 2, size));
+            placed.Add(new(pos - size / 2, size));
         }
     }
 
@@ -174,7 +179,7 @@ internal class WorldToastManager {
         var camera = Camera.main;
         if (camera == null) return false;
 
-        var age = Time.time - entry.StartTime;
+        float age = Time.time - entry.StartTime;
         var floatedWorld = entry.MoveUp ? entry.WorldPos + Vector3.up * (age * FloatSpeed) : entry.WorldPos;
         var screenPos = camera.WorldToScreenPoint(floatedWorld);
 
@@ -197,9 +202,9 @@ internal class WorldToastManager {
         // Clamp into the canvas so the toast stays visible even when the camera doesn't follow Hornet
         // (some tricks freeze the camera while she flies off-screen).
         var rect = canvasRect.rect;
-        var clampedX = Mathf.Clamp(localPoint.x, rect.xMin + ScreenMargin, rect.xMax - ScreenMargin);
-        var clampedY = Mathf.Clamp(localPoint.y, rect.yMin + ScreenMargin, rect.yMax - ScreenMargin);
-        var clamped = !Mathf.Approximately(clampedX, localPoint.x) || !Mathf.Approximately(clampedY, localPoint.y);
+        float clampedX = Mathf.Clamp(localPoint.x, rect.xMin + ScreenMargin, rect.xMax - ScreenMargin);
+        float clampedY = Mathf.Clamp(localPoint.y, rect.yMin + ScreenMargin, rect.yMax - ScreenMargin);
+        bool clamped = !Mathf.Approximately(clampedX, localPoint.x) || !Mathf.Approximately(clampedY, localPoint.y);
 
         entry.Go.GetComponent<RectTransform>().localPosition = new Vector2(clampedX, clampedY);
         return clamped;
