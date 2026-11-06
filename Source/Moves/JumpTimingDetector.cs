@@ -126,10 +126,8 @@ internal static class JumpTimingPatches {
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(HeroController), "OnShuttleCockJump")]
-#pragma warning disable HARMONIZE001
+    [HarmonyPatch(typeof(HeroController), nameof(HeroController.OnShuttleCockJump))]
     private static void OnShuttleCockJump() {
-#pragma warning restore HARMONIZE001
         try {
             JumpTimingDetector.OnShuttleCockJump();
         } catch (Exception e) {

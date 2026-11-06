@@ -238,10 +238,8 @@ internal static class PogoEndlagDetector {
 [HarmonyPatch]
 internal static class PogoEndlagPatches {
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(HeroController), "DownAttack")]
-#pragma warning disable HARMONIZE001
+    [HarmonyPatch(typeof(HeroController), nameof(HeroController.DownAttack))]
     private static void DownAttack(HeroController __instance) {
-#pragma warning restore HARMONIZE001
         try {
             PogoEndlagDetector.OnDownAttack(__instance);
         } catch (Exception e) {

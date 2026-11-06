@@ -46,11 +46,6 @@ internal static class WallJumpDetector {
     private static readonly Color SlowColor = new(1f, 1f, 0.4f);
     private static readonly Color FailColor = new(1f, 0.3f, 0.4f);
 
-    internal static readonly AccessTools.FieldRef<HeroController, bool> QueuedWallJumpInterrupt =
-        AccessTools.FieldRefAccess<HeroController, bool>("queuedWallJumpInterrupt");
-    private static readonly AccessTools.FieldRef<HeroController, int> WallJumpChainStepsLeft =
-        AccessTools.FieldRefAccess<HeroController, int>("wallJumpChainStepsLeft");
-
     private static FrameTime? possibleSince; // first frame a jump press would have queued a QWJ
     private static FrameTime? lastPossible;
     private static (FrameTime Since, FrameTime Last, FrameTime Closed, QwjBlock Reason)? closedWindow;
@@ -110,7 +105,7 @@ internal static class WallJumpDetector {
     internal static void OnTryQueue(HeroController hero, bool wasQueued) {
         if (!enabled.Value) return;
 
-        if (!wasQueued && QueuedWallJumpInterrupt(hero)) {
+        if (!wasQueued && hero.queuedWallJumpInterrupt) {
             var now = FrameTime.Now;
             // The game just confirmed a QWJ is possible, even if it got queued before this frame's BeforeHeroUpdate.
             possibleSince ??= now;
@@ -157,7 +152,7 @@ internal static class WallJumpDetector {
         var pressed = input.inputActions.Jump.WasPressed;
         if (pressed && !hero.cState.onGround && hero.playerData.hasWalljump) {
             // A queued or performed walljump gets reported when it fires (OnWallJump).
-            ClaimedPress = QueuedWallJumpInterrupt(hero) || wallJumpedThisFrame || ReportMissedQwj(hero, input);
+            ClaimedPress = hero.queuedWallJumpInterrupt || wallJumpedThisFrame || ReportMissedQwj(hero, input);
         }
 
         if (earlyPress is var (pressedAt, tooFar) && (FrameTime.Now - pressedAt).Ms > EarlyWindowMs) {
@@ -218,7 +213,7 @@ internal static class WallJumpDetector {
         if (!hero.IsFacingNearWall(hero.cState.facingRight, range, Color.green)) return QwjBlock.WallTooShort;
 
         if (hero.dashingDown) return QwjBlock.DashingDown;
-        var chained = hero.wallLocked || WallJumpChainStepsLeft(hero) > 0;
+        var chained = hero.wallLocked || hero.wallJumpChainStepsLeft > 0;
         if (!chained && Mathf.Abs(HeldDirection(InputHandler.SilentInstance)) <= Mathf.Epsilon)
             return QwjBlock.NoDirection;
 
@@ -260,23 +255,19 @@ internal static class WallJumpDetector {
 [HarmonyPatch]
 internal static class WallJumpPatches {
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(HeroController), "TryQueueWallJumpInterrupt")]
-#pragma warning disable HARMONIZE001
+    [HarmonyPatch(typeof(HeroController), nameof(HeroController.TryQueueWallJumpInterrupt))]
     private static void TryQueuePrefix(HeroController __instance, out bool __state) {
-#pragma warning restore HARMONIZE001
         __state = false;
         try {
-            __state = WallJumpDetector.QueuedWallJumpInterrupt(__instance);
+            __state = __instance.queuedWallJumpInterrupt;
         } catch (Exception e) {
             Log.Error(e);
         }
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(HeroController), "TryQueueWallJumpInterrupt")]
-#pragma warning disable HARMONIZE001
+    [HarmonyPatch(typeof(HeroController), nameof(HeroController.TryQueueWallJumpInterrupt))]
     private static void TryQueuePostfix(HeroController __instance, bool __state) {
-#pragma warning restore HARMONIZE001
         try {
             WallJumpDetector.OnTryQueue(__instance, __state);
         } catch (Exception e) {
@@ -285,22 +276,16 @@ internal static class WallJumpPatches {
     }
 
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(HeroController), "TryDoWallJumpFromMove")]
-#pragma warning disable HARMONIZE001
+    [HarmonyPatch(typeof(HeroController), nameof(HeroController.TryDoWallJumpFromMove))]
     private static void TryDoWallJumpFromMovePrefix() => WallJumpDetector.OnTryDoWallJumpFromMove(true);
-#pragma warning restore HARMONIZE001
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(HeroController), "TryDoWallJumpFromMove")]
-#pragma warning disable HARMONIZE001
+    [HarmonyPatch(typeof(HeroController), nameof(HeroController.TryDoWallJumpFromMove))]
     private static void TryDoWallJumpFromMovePostfix() => WallJumpDetector.OnTryDoWallJumpFromMove(false);
-#pragma warning restore HARMONIZE001
 
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(HeroController), "DoWallJump")]
-#pragma warning disable HARMONIZE001
+    [HarmonyPatch(typeof(HeroController), nameof(HeroController.DoWallJump))]
     private static void DoWallJump(HeroController __instance) {
-#pragma warning restore HARMONIZE001
         try {
             WallJumpDetector.OnWallJump(__instance);
         } catch (Exception e) {

@@ -94,10 +94,8 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
 [HarmonyPatch]
 internal static class FsmStatePatches {
     [HarmonyPrefix]
-    [HarmonyPatch(typeof(Fsm), "EnterState", typeof(FsmState))]
-#pragma warning disable HARMONIZE001
+    [HarmonyPatch(typeof(Fsm), nameof(Fsm.EnterState), typeof(FsmState))]
     private static void EnterState(Fsm __instance, FsmState state) {
-#pragma warning restore HARMONIZE001
         try {
             ForceCrawPogo.OnEnterState(__instance, state);
         } catch (Exception e) {
