@@ -70,8 +70,8 @@ internal static class WallJumpDetector {
     internal static void BindConfig(ConfigFile config) {
         enabled = config.Bind(Section, "Enabled", false, "Show walljump timing popups");
     }
-
-    internal static void BeforeHeroUpdate(HeroController hero) {
+    
+    internal static void PreHeroUpdate(HeroController hero) {
         if (!enabled.Value) return;
 
         var now = FrameTime.Now;
@@ -259,18 +259,6 @@ internal static class WallJumpDetector {
 // ReSharper disable InconsistentNaming
 [HarmonyPatch]
 internal static class WallJumpPatches {
-    [HarmonyPrefix]
-    [HarmonyPatch(typeof(HeroController), "Update")]
-#pragma warning disable HARMONIZE001
-    private static void Update(HeroController __instance) {
-#pragma warning restore HARMONIZE001
-        try {
-            WallJumpDetector.BeforeHeroUpdate(__instance);
-        } catch (Exception e) {
-            Log.Error(e);
-        }
-    }
-
     [HarmonyPrefix]
     [HarmonyPatch(typeof(HeroController), "TryQueueWallJumpInterrupt")]
 #pragma warning disable HARMONIZE001

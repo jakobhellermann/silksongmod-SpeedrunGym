@@ -15,6 +15,7 @@ namespace SpeedrunGym.Source;
 public partial class SpeedrunGymPlugin : BaseUnityPlugin {
     private Harmony harmony = null!;
     private WorldToastManager worldToasts = null!;
+    private PreHeroUpdate preHeroUpdate = null!;
     private TrainingDummy trainingDummy = new();
 
     private static SpeedrunGymPlugin instance = null!;
@@ -35,6 +36,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
             "How long feedback popups stay on screen before fading out.").Value;
 
         worldToasts = WorldToastManager.Create();
+        preHeroUpdate = gameObject.AddComponent<PreHeroUpdate>();
         SceneManager.sceneLoaded += OnSceneLoaded;
 
         try {
@@ -61,6 +63,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
 
         try {
             SceneManager.sceneLoaded -= OnSceneLoaded;
+            Destroy(preHeroUpdate);
             harmony.UnpatchSelf();
             ForceCrawPogo.Cleanup();
             worldToasts.Destroy();
@@ -83,7 +86,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         }
     }
     
-    internal new static void StartCoroutine(IEnumerator coroutine) {
+    internal static new void StartCoroutine(IEnumerator coroutine) {
         ((MonoBehaviour)instance).StartCoroutine(coroutine);
     }
 }
