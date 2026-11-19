@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix certain enemies (like whispering vaults conductor) always being treated as unhittable
+
 ## 0.6.0
 
 - Add option to tint enemies while they can't be hit

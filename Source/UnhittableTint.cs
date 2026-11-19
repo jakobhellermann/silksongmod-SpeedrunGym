@@ -55,11 +55,12 @@ internal static class UnhittableTint {
     private static bool IsHittable(HealthManager hm) {
         if (hm.IsInvincible && hm.InvincibleFromDirection == 0) return false;
 
-        hm.GetComponents(colliderBuffer);
+        hm.GetComponentsInChildren(colliderBuffer);
         foreach (var collider in colliderBuffer) {
-            if (collider.enabled && !Physics2D.GetIgnoreLayerCollision(collider.gameObject.layer, attackLayer)) {
-                return true;
-            }
+            if (!collider.enabled || Physics2D.GetIgnoreLayerCollision(collider.gameObject.layer, attackLayer)) continue;
+
+            // hits on a child collider only reach the HealthManager if the child has no own Rigidbody2D (see HitTaker)
+            if (collider.gameObject == hm.gameObject || !collider.GetComponent<Rigidbody2D>()) return true;
         }
 
         return false;
