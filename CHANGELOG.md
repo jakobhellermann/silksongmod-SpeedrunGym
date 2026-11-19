@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.0
+
 - Add option to tint enemies while they can't be hit
 - Add visualization toggles to speedrungym command palette
 - Move spawn/despawn training dummy keybinds to command palette
