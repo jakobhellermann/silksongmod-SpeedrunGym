@@ -210,3 +210,16 @@ internal class WorldToastManager {
         return clamped;
     }
 }
+
+[HarmonyLib.HarmonyPatch]
+internal static class WorldToastPatches {
+    [HarmonyLib.HarmonyPrefix]
+    [HarmonyLib.HarmonyPatch(typeof(GameManager), nameof(GameManager.BeginSceneTransition))]
+    private static void BeginSceneTransition() {
+        try {
+            WorldToastManager.ClearAll();
+        } catch (System.Exception e) {
+            Log.Error(e);
+        }
+    }
+}
