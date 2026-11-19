@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add option to tint enemies while they can't be hit
+
 ## 0.5.0
 
 - Add option for silk waste toasts

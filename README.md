@@ -43,6 +43,12 @@ Two independently toggleable air-jump readouts, shown as popups next to Hornet.
 
 Shows a `silk wasted` popup when a hit would have generated silk while your spool is already full.
 
+## Unhittable Tint
+
+Tints enemies while they can't be hit. Color can be configured.
+
+![unhittable tint demo](https://raw.githubusercontent.com/jakobhellermann/silksongmod-SpeedrunGym/main/docs/unhittable-tint.png)
+
 ## Queued Walljump
 
 When enabled, display why queued walljumps failed, or how close to optimal they were.

@@ -29,6 +29,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         JumpTimingDetector.BindConfig(Config);
         WallJumpDetector.BindConfig(Config);
         SilkWasteDetector.BindConfig(Config);
+        UnhittableTint.BindConfig(Config);
         trainingDummy.BindConfig(Config);
 
         WorldToastManager.MaxAge = Config.Bind("Toasts",
@@ -53,6 +54,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
             WallJumpDetector.LateUpdate(); // before JumpTimingDetector, which skips presses it claims
             JumpTimingDetector.LateUpdate();
             trainingDummy.LateUpdate();
+            UnhittableTint.LateUpdate();
             worldToasts.Update();
         } catch (Exception e) {
             Log.Error($"Error during LateUpdate: {e}");
@@ -69,6 +71,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
             ForceCrawPogo.Cleanup();
             worldToasts.Destroy();
             trainingDummy.Dispose();
+            UnhittableTint.Dispose();
         } catch (Exception e) {
             Log.Info($"Plugin {Name} ({Id}) failed to clean up: {e}");
         }
@@ -82,6 +85,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
             WorldToastManager.ClearAll();
             ForceCrawPogo.OnSceneLoaded();
             WallJumpDetector.Reset();
+            UnhittableTint.OnSceneLoaded();
         } catch (Exception e) {
             Log.Error($"Error during OnSceneLoaded: {e}");
         }
