@@ -1,3 +1,4 @@
+using System;
 using BepInEx.Logging;
 using JetBrains.Annotations;
 
@@ -17,6 +18,20 @@ internal static class Log {
 
     internal static void Error(object data) {
         logSource?.LogError(data);
+    }
+
+    internal static void Error(Exception e) => Error(Format(e));
+
+    internal static void Error(string context, Exception e) => Error($"{context}: {Format(e)}");
+
+    // ToString can throw itself when the stack contains Harmony-patched methods; letting that escape a patch's catch
+    // block makes Unity abort while logging it
+    private static string Format(Exception e) {
+        try {
+            return e.ToString();
+        } catch (Exception formatException) {
+            return $"{e.GetType().FullName}: {e.Message} (stack trace unavailable: {formatException.GetType().Name})";
+        }
     }
 
     internal static void Fatal(object data) {

@@ -30,6 +30,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         PogoEndlagDetector.BindConfig(Config);
         JumpTimingDetector.BindConfig(Config);
         WallJumpDetector.BindConfig(Config);
+        VaultDetector.BindConfig(Config);
         SilkWasteDetector.BindConfig(Config);
         UnhittableTint.BindConfig(Config);
         trainingDummy.BindConfig(Config);
@@ -66,6 +67,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
                             CreateConfigToggle("Jump Timing Repress", JumpTimingDetector.repress),
                             CreateConfigToggle("Jump Timing Sprintjump Release", JumpTimingDetector.sprintjumpRelease),
                             CreateConfigToggle("Walljump", WallJumpDetector.enabled),
+                            CreateConfigToggle("Vault", VaultDetector.enabled),
                             CreateConfigToggle("Silk Waste", SilkWasteDetector.enabled),
                             CreateConfigToggle("Unhittable Tint", UnhittableTint.Enabled),
                         ]),
@@ -83,10 +85,11 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
             PogoEndlagDetector.LateUpdate();
             WallJumpDetector.LateUpdate(); // before JumpTimingDetector, which skips presses it claims
             JumpTimingDetector.LateUpdate();
+            VaultDetector.LateUpdate();
             UnhittableTint.LateUpdate();
             worldToasts.Update();
         } catch (Exception e) {
-            Log.Error($"Error during LateUpdate: {e}");
+            Log.Error("Error during LateUpdate", e);
         }
     }
 
@@ -114,9 +117,10 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
             WorldToastManager.ClearAll();
             ForceCrawPogo.OnSceneLoaded();
             WallJumpDetector.Reset();
+            VaultDetector.Reset();
             UnhittableTint.OnSceneLoaded();
         } catch (Exception e) {
-            Log.Error($"Error during OnSceneLoaded: {e}");
+            Log.Error("Error during OnSceneLoaded", e);
         }
     }
 
@@ -132,6 +136,7 @@ internal static class FsmStatePatches {
     private static void EnterState(Fsm __instance, FsmState state) {
         try {
             ForceCrawPogo.OnEnterState(__instance, state);
+            VaultDetector.OnEnterState(__instance, state);
         } catch (Exception e) {
             Log.Error(e);
         }
