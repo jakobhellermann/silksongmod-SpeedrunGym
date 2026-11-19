@@ -53,7 +53,7 @@ internal static class UnhittableTint {
     }
 
     private static bool IsHittable(HealthManager hm) {
-        if (hm.IsInvincible) return false;
+        if (hm.IsInvincible && hm.InvincibleFromDirection == 0) return false;
 
         hm.GetComponents(colliderBuffer);
         foreach (var collider in colliderBuffer) {
