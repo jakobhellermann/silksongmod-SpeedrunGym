@@ -3,6 +3,7 @@
 ## Unreleased
 
 # 0.6.1
+
 - Fix certain enemies (like whispering vaults conductor) always being treated as unhittable
 
 ## 0.6.0
