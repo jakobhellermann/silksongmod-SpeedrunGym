@@ -12,7 +12,7 @@ namespace SpeedrunGym.Source.Moves;
 // and how many ms too early the landing was (vs. using the full spike duration).
 internal static class PogoEndlagDetector {
     private const string Section = "Pogo Endlag";
-    private static ConfigEntry<bool> enabled = null!;
+    internal static ConfigEntry<bool> enabled = null!;
     private static ConfigEntry<bool> showGood = null!;
     private static ConfigEntry<float> slowRepressThresholdMs = null!;
     private static ConfigEntry<float> slowJumpThresholdMs = null!;

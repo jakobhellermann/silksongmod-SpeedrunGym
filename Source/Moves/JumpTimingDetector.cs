@@ -17,8 +17,8 @@ namespace SpeedrunGym.Source.Moves;
 internal static class JumpTimingDetector {
     private const string Section = "Jump Timing";
     private const float ResetMs = 250f; // drop a pending release if no repress arrives within this window
-    private static ConfigEntry<bool> repress = null!;
-    private static ConfigEntry<bool> sprintjumpRelease = null!;
+    internal static ConfigEntry<bool> repress = null!;
+    internal static ConfigEntry<bool> sprintjumpRelease = null!;
 
     private static readonly Color Color = new(0.4f, 1f, 0.4f);
 

@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using BepInEx;
+using BepInEx.Configuration;
 using HarmonyLib;
 using HutongGames.PlayMaker;
 using SpeedrunGym.Source.Moves;
@@ -48,12 +50,39 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         }
     }
 
+    private void Start() {
+        // Register after DebugMod Awake
+        try {
+            DebugModInterop.RegisterSubmenu("Speedrun Gym",
+                () => [
+                    DebugModInterop.CreateSubmenu("Training Dummy",
+                        () => [
+                            DebugModInterop.CreateAction("Spawn", trainingDummy.Spawn),
+                            DebugModInterop.CreateAction("Despawn all", trainingDummy.DespawnAll),
+                        ]),
+                    DebugModInterop.CreateSubmenu("Visualization",
+                        () => [
+                            CreateConfigToggle("Pogo Endlag", PogoEndlagDetector.enabled),
+                            CreateConfigToggle("Jump Timing Repress", JumpTimingDetector.repress),
+                            CreateConfigToggle("Jump Timing Sprintjump Release", JumpTimingDetector.sprintjumpRelease),
+                            CreateConfigToggle("Walljump", WallJumpDetector.enabled),
+                            CreateConfigToggle("Silk Waste", SilkWasteDetector.enabled),
+                            CreateConfigToggle("Unhittable Tint", UnhittableTint.Enabled),
+                        ]),
+                ]);
+        } catch (Exception e) {
+            Log.Error(e);
+        }
+    }
+
+    private static object? CreateConfigToggle(string title, ConfigEntry<bool> entry)
+        => DebugModInterop.CreateAction(() => $"{title}: {(entry.Value ? "On" : "Off")}", () => entry.Value = !entry.Value);
+
     private void LateUpdate() {
         try {
             PogoEndlagDetector.LateUpdate();
             WallJumpDetector.LateUpdate(); // before JumpTimingDetector, which skips presses it claims
             JumpTimingDetector.LateUpdate();
-            trainingDummy.LateUpdate();
             UnhittableTint.LateUpdate();
             worldToasts.Update();
         } catch (Exception e) {

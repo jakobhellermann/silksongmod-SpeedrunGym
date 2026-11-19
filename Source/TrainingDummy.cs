@@ -75,8 +75,6 @@ public class TrainingDummy : IDisposable {
     private const string Section = "Training Dummy";
     private const int SpawnOffset = 4;
 
-    private static ConfigEntry<KeyboardShortcut> spawnDummyShortcut = null!;
-    private static ConfigEntry<KeyboardShortcut> despawnDummiesShortcut = null!;
     private static ConfigEntry<DummyContactDamage> contactDamage = null!;
     private static ConfigEntry<bool> takeKnockback = null!;
 
@@ -95,14 +93,6 @@ public class TrainingDummy : IDisposable {
     }
 
     internal void BindConfig(ConfigFile config) {
-        spawnDummyShortcut = config.Bind(Section,
-            "Spawn training dummy",
-            KeyboardShortcut.Empty,
-            "Spawn a grand reed as target practice.");
-        despawnDummiesShortcut = config.Bind(Section,
-            "Despawn training dummies",
-            KeyboardShortcut.Empty,
-            "Despawn all training dummies.");
         contactDamage = config.Bind(Section,
             "Contact damage",
             DummyContactDamage.EffectOnly,
@@ -170,13 +160,12 @@ public class TrainingDummy : IDisposable {
         spawnedDummies.Clear();
     }
 
-    internal void LateUpdate() {
-        if (spawnDummyShortcut.Value.IsDown()) {
-            SpeedrunGymPlugin.StartCoroutine(InstantiateTrainingDummy());
-        }
-        if (despawnDummiesShortcut.Value.IsDown()) {
-            DespawnTrainingDummies();
-        }
+    internal void Spawn() {
+        SpeedrunGymPlugin.StartCoroutine(InstantiateTrainingDummy());
+    }
+
+    internal void DespawnAll() {
+        DespawnTrainingDummies();
     }
 }
 

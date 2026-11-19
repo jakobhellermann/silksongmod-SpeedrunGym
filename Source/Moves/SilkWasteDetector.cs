@@ -7,7 +7,7 @@ using UnityEngine;
 namespace SpeedrunGym.Source.Moves;
 
 internal static class SilkWasteDetector {
-    private static ConfigEntry<bool> enabled = null!;
+    internal static ConfigEntry<bool> enabled = null!;
 
     private static readonly Color Color = new(1f, 0.4f, 0.4f);
 

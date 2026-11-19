@@ -40,7 +40,7 @@ internal static class WallJumpDetector {
     private const float LateWindowMs = 200f;
     private const float WallJumpMaxLatenessMs = 150f;
     private const int WallLayerMask = 8448; // Terrain + layer 13, as in HeroController.IsFacingNearWall
-    private static ConfigEntry<bool> enabled = null!;
+    internal static ConfigEntry<bool> enabled = null!;
 
     private static readonly Color GoodColor = new(0.4f, 1f, 0.4f);
     private static readonly Color SlowColor = new(1f, 1f, 0.4f);
