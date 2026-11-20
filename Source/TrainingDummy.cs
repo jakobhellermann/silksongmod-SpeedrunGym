@@ -118,7 +118,7 @@ public class TrainingDummy : IDisposable {
     }
 
     private IEnumerator InstantiateTrainingDummy() {
-        var hero = HeroController.SilentInstance;
+        var hero = HeroController.UnsafeInstance;
         if (!hero) yield break;
 
         trainingDummyAsset.Load();

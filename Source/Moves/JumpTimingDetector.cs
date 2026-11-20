@@ -61,7 +61,7 @@ internal static class JumpTimingDetector {
 
         // Reset while grounded or dashing: only air represses matter, a ground release must not pair with
         // a later press, and a jump out of a dash (shuttlecock → release → dash → jump) is not a repress.
-        var hero = HeroController.SilentInstance;
+        var hero = HeroController.UnsafeInstance;
         if (hero && (hero.cState.onGround || hero.cState.dashing)) {
             released = null;
             shuttlecockActive = false;

@@ -10,7 +10,7 @@ internal class PreHeroUpdate : MonoBehaviour {
 
     private void Update() {
         try {
-            var hero = HeroController.SilentInstance;
+            var hero = HeroController.UnsafeInstance;
             if (!hero || !hero.isActiveAndEnabled) return;
 
             WallJumpDetector.PreHeroUpdate(hero);

@@ -147,7 +147,7 @@ internal static class WallJumpDetector {
         ClaimedPress = false;
         if (!enabled.Value) return;
 
-        var hero = HeroController.SilentInstance;
+        var hero = HeroController.UnsafeInstance;
         var input = InputHandler.SilentInstance;
         if (!hero || input == null) return;
 

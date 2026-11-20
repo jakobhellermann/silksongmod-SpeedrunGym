@@ -61,7 +61,7 @@ internal static class PogoEndlagDetector {
         if (startedDownspike is null) return;
         if (startedDownspike.RelevantInput is not null) return;
 
-        var cState = HeroController.SilentInstance.cState;
+        var cState = HeroController.UnsafeInstance.cState;
         if (cState.downSpiking || cState.downSpikeRecovery) {
             var now = FrameTime.Now;
 
@@ -98,7 +98,7 @@ internal static class PogoEndlagDetector {
 
     // Show a small popup floating up next to Hornet, slightly above her head.
     private static void HeroToast(string message, Color color) {
-        var hero = HeroController.SilentInstance;
+        var hero = HeroController.UnsafeInstance;
         if (!hero) return;
         WorldToastManager.Show(message,
             hero.transform.position + Vector3.up * 1.5f + Vector3.right * (hero.cState.facingRight ? 1 : -1),
@@ -108,7 +108,7 @@ internal static class PogoEndlagDetector {
 
     // Runs in LateUpdate. OnUpdateState always fires earlier in the same frame (physics collision)
     internal static void LateUpdate() {
-        var hero = HeroController.SilentInstance;
+        var hero = HeroController.UnsafeInstance;
         if (!hero) return;
 
         if (startedDownspike is not { } downspike) return;
