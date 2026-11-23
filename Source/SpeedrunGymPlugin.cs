@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -14,6 +15,7 @@ namespace SpeedrunGym.Source;
 
 [BepInAutoPlugin("io.github.jakobhellermann.speedrungym")]
 [BepInDependency("org.silksong-modding.assethelper")]
+[BepInDependency(DebugModInterop.PluginId, BepInDependency.DependencyFlags.SoftDependency)]
 public partial class SpeedrunGymPlugin : BaseUnityPlugin {
     private static SpeedrunGymPlugin instance = null!;
     private Harmony harmony = null!;
@@ -54,30 +56,42 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
     private void Start() {
         // Register after DebugMod Awake
         try {
-            DebugModInterop.RegisterSubmenu("Speedrun Gym",
-                () => [
-                    DebugModInterop.CreateSubmenu("Training Dummy",
-                        () => [
-                            DebugModInterop.CreateAction("Spawn", trainingDummy.Spawn),
-                            DebugModInterop.CreateAction("Despawn all", trainingDummy.DespawnAll),
-                        ]),
-                    DebugModInterop.CreateSubmenu("Visualization",
-                        () => [
-                            CreateConfigToggle("Pogo Endlag", PogoEndlagDetector.enabled),
-                            CreateConfigToggle("Jump Timing Repress", JumpTimingDetector.repress),
-                            CreateConfigToggle("Jump Timing Sprintjump Release", JumpTimingDetector.sprintjumpRelease),
-                            CreateConfigToggle("Walljump", WallJumpDetector.enabled),
-                            CreateConfigToggle("Vault", VaultDetector.enabled),
-                            CreateConfigToggle("Silk Waste", SilkWasteDetector.enabled),
-                            CreateConfigToggle("Unhittable Tint", UnhittableTint.Enabled),
-                        ]),
-                ]);
+            RegisterInDebugMod();
         } catch (Exception e) {
             Log.Error(e);
         }
     }
 
-    private static object? CreateConfigToggle(string title, ConfigEntry<bool> entry)
+    /// DebugMod is a soft dependency: this method's body references its types, so it must only run (and be JITted)
+    /// while DebugMod is loaded. NoInlining keeps it out of Start's body.
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void RegisterInDebugMod() {
+        if (!DebugModInterop.Installed) return;
+
+        DebugModInterop.RegisterSubmenu(() => "Speedrun Gym", GetGymMenu);
+    }
+
+    /// created once and reused: DebugMod's palette history dedupes by item reference, so fresh instances per open would
+    /// accumulate duplicate history entries
+    private List<DebugMod.UI.CommandPalette.CommandPaletteItem>? gymMenuItems;
+
+    private List<DebugMod.UI.CommandPalette.CommandPaletteItem> GetGymMenu() => gymMenuItems ??= [
+        DebugModInterop.CreateSubmenu("Training Dummy", () => [
+            DebugModInterop.CreateAction("Spawn", trainingDummy.Spawn),
+            DebugModInterop.CreateAction("Despawn all", trainingDummy.DespawnAll),
+        ]),
+        DebugModInterop.CreateSubmenu("Visualization", () => [
+            CreateConfigToggle("Pogo Endlag", PogoEndlagDetector.enabled),
+            CreateConfigToggle("Jump Timing Repress", JumpTimingDetector.repress),
+            CreateConfigToggle("Jump Timing Sprintjump Release", JumpTimingDetector.sprintjumpRelease),
+            CreateConfigToggle("Walljump", WallJumpDetector.enabled),
+            CreateConfigToggle("Vault", VaultDetector.enabled),
+            CreateConfigToggle("Silk Waste", SilkWasteDetector.enabled),
+            CreateConfigToggle("Unhittable Tint", UnhittableTint.Enabled),
+        ]),
+    ];
+
+    private static DebugMod.UI.CommandPalette.CommandPaletteItem CreateConfigToggle(string title, ConfigEntry<bool> entry)
         => DebugModInterop.CreateAction(() => $"{title}: {(entry.Value ? "On" : "Off")}", () => entry.Value = !entry.Value);
 
     private void LateUpdate() {
@@ -111,7 +125,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         Log.Info($"Plugin {Name} ({Id}) has been unloaded!");
     }
 
-    // Single global scene-loaded listener; dispatches to features that need it.
+    /// Single global scene-loaded listener; dispatches to features that need it.
     private static void OnSceneLoaded(Scene scene, LoadSceneMode loadMode) {
         try {
             WorldToastManager.ClearAll();

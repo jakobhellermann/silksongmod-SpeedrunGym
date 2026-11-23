@@ -15,6 +15,8 @@
 
         <RestorePackagesWithLockFile>True</RestorePackagesWithLockFile>
         <RestoreLockedMode Condition="'$(CI)' == 'true'">True</RestoreLockedMode>
+        <!-- Default language sheet for the I18N translations in languages/ -->
+        <NeutralLanguage>EN</NeutralLanguage>
 
         <!-- Shortens and anonymizes paths in debug symbols relative to the project directory. Breakpoints will not work, however. -->
         <PathMap Condition="'$(Configuration)' == 'Release'">$(MSBuildProjectDirectory)=/</PathMap>
@@ -33,6 +35,8 @@
         <PackageReference Include="Hamunii.BepInEx.AutoPlugin" Version="2.1.0" PrivateAssets="all"/>
         <PackageReference Include="Microsoft.Unity.Analyzers" Version="1.26.0" PrivateAssets="all"/>
         <PackageReference Include="Silksong.AssetHelper" Version="1.3.2"/>
+        <!-- DebugMod API reference only; the assembly comes from the DebugMod install at runtime (soft dependency) -->
+        <PackageReference Include="Silksong.DebugMod" Version="1.2.1" PrivateAssets="all" ExcludeAssets="runtime"/>
         <PackageReference
                 Include="UnityEngine.Modules"
                 Version="6000.0.50"
@@ -71,6 +75,7 @@
         <ItemGroup>
             <Binaries Include="$(TargetPath)" LocalDir="/" PackDir="/"/>
             <Binaries Include="$(TargetDir)/$(TargetName).pdb" LocalDir="/" PackDir="/"/>
+            <Binaries Include="$(ProjectDir)/languages/*.json" LocalDir="languages" PackDir="/languages"/>
         </ItemGroup>
         <PropertyGroup>
             <ThunderstoreDir>$(ProjectDir)/thunderstore</ThunderstoreDir>

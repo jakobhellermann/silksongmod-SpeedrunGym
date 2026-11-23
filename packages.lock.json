@@ -60,6 +60,18 @@
           "UnityEngine.Modules": "6000.0.50"
         }
       },
+      "Silksong.DebugMod": {
+        "type": "Direct",
+        "requested": "[1.2.1, )",
+        "resolved": "1.2.1",
+        "contentHash": "rfoZr/a7TJMtX/lFTIUFAOTGwZsGX5uz7ZevZQmqTf4TkulED1c4N8WZGhvH7FbAEnX0/I6oCLlvO2v6GPA++g==",
+        "dependencies": {
+          "BepInEx.Core": "5.4.21",
+          "HarmonyX": "2.9.0",
+          "Silksong.I18N": "1.1.1",
+          "UnityEngine.Modules": "6000.0.50"
+        }
+      },
       "Silksong.GameLibs": {
         "type": "Direct",
         "requested": "[*-*, )",
@@ -140,6 +152,16 @@
           "System.Reflection.Emit.ILGeneration": "4.7.0",
           "System.Reflection.Emit.Lightweight": "4.7.0",
           "System.Reflection.TypeExtensions": "4.7.0"
+        }
+      },
+      "Silksong.I18N": {
+        "type": "Transitive",
+        "resolved": "1.1.1",
+        "contentHash": "aRtHyOV1Y2Ar8FPn4/lSrG0MnKKh/T2ES8kNw+mPkkYmB2y12IIlihCgyTvV1vsly83pdCkuOpyJO6urGxPt8A==",
+        "dependencies": {
+          "BepInEx.Core": "5.4.21",
+          "HarmonyX": "2.9.0",
+          "UnityEngine.Modules": "6000.0.50"
         }
       },
       "System.Collections": {
