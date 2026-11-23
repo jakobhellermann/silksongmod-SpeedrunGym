@@ -35,6 +35,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         VaultDetector.BindConfig(Config);
         SilkWasteDetector.BindConfig(Config);
         UnhittableTint.BindConfig(Config);
+        StepJumpDetector.BindConfig(Config);
         trainingDummy.BindConfig(Config);
 
         WorldToastManager.MaxAge = Config.Bind("Toasts",
@@ -112,6 +113,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
             JumpTimingDetector.LateUpdate();
             VaultDetector.LateUpdate();
             UnhittableTint.LateUpdate();
+            StepJumpDetector.LateUpdate();
             worldToasts.Update();
         } catch (Exception e) {
             Log.Error("Error during LateUpdate", e);
