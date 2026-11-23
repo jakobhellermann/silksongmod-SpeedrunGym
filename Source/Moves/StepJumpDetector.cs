@@ -10,12 +10,24 @@ using Vector3 = UnityEngine.Vector3;
 
 namespace SpeedrunGym.Source.Moves;
 
+// Extra jump height above a normal full jump, measured from the jump's start to its peak.
+// A stepjump's coyote re-jump (HeroJump out of the ledge buffer midair) re-impulses exactly like a fresh
+// jump, so measured from its own start it would always read +0 — it must extend the FIRST jump's
+// measurement instead of re-baselining it. Hence the phase enum.
 internal static class StepJumpDetector {
+    private enum StepjumpPhase {
+        Idle,
+        Measuring, // a jump is in flight; peak tracked from its start height
+        AwaitingRepress, // jump cut (released) while still rising; a ledge-buffer repress can extend it
+    }
+
     private const string Section = "Step Jump";
     internal static ConfigEntry<bool> enabled = null!;
 
     private static readonly Color color = new(0.4f, 1f, 0.4f);
 
+    private static StepjumpPhase phase;
+    private static bool repressed;
     private static float? startHeight;
     private static float? peakHeight;
     // private static FrameTime? released; // when the button was let go, awaiting a repress
@@ -33,14 +45,23 @@ internal static class StepJumpDetector {
     internal static void OnHeroJumped() {
         var hero = HeroController.instance;
 
+        if (phase == StepjumpPhase.AwaitingRepress) {
+            // the coyote re-jump: keep the original start, let it extend the same measurement
+            phase = StepjumpPhase.Measuring;
+            repressed = true;
+            return;
+        }
+
         startHeight = hero.rb2d.position.y;
         peakHeight = null;
+        repressed = false;
+        phase = StepjumpPhase.Measuring;
 
         Log.Info($"startHeight={FormatDecimals(startHeight)}");
     }
 
     private static void FinishJump() {
-        startHeight = null;
+        phase = StepjumpPhase.Idle;
     }
     
     private static void Report(HeroController hero) {
@@ -48,25 +69,32 @@ internal static class StepJumpDetector {
 
         var jumpHeight = peakHeight - start;
 
-        Log.Info($"peak at {peakHeight}");
+        Log.Info($"peak at {peakHeight}{(repressed ? " (repress)" : "")}");
 
         const float baseHeight = 5.483998f;
 
-        HeroToast($"extra height={FormatDecimals(jumpHeight - baseHeight)}", color);
+        HeroToast($"extra height={FormatDecimals(jumpHeight - baseHeight)}{(repressed ? " repress" : "")}", color);
     }
 
     internal static void LateUpdate() {
         if (!enabled.Value) return;
 
         var hero = HeroController.UnsafeInstance;
-        if (!hero) return;
+        if (!hero || phase == StepjumpPhase.Idle) return;
 
-        if (startHeight != null) {
-            var height = hero.rb2d.position.y;
-            peakHeight = Mathf.Max(peakHeight ?? float.NegativeInfinity, height);
+        peakHeight = Mathf.Max(peakHeight ?? float.NegativeInfinity, hero.rb2d.position.y);
+
+        // Jump cancelled while still rising: a ledge-buffer repress may re-impulse midair.
+        if (phase == StepjumpPhase.Measuring && !hero.cState.jumping && !hero.cState.onGround
+            && hero.rb2d.linearVelocity.y > 0f) {
+            phase = StepjumpPhase.AwaitingRepress;
         }
 
-        if (hero.cState.falling) {
+        // Over once falling with nothing left that could re-impulse: not jumping anymore, and no open
+        // ledge-buffer window. A repress sets jumping (and consumes the ledge) on the same frame falling
+        // first flips, so check jumping first — else the report pops at the coyote re-jump's low point
+        // instead of at the end.
+        if (hero.cState.falling && !hero.cState.jumping && hero.ledgeBufferSteps <= 0) {
             Report(hero);
             FinishJump();
         }
