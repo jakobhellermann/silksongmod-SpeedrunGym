@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add "Skip Wait" keybind for skipping cutscenes, dialogue and any wait time (best effort), bindable in DebugMod
+
 # 0.6.1
 
 - Fix certain enemies (like whispering vaults conductor) always being treated as unhittable

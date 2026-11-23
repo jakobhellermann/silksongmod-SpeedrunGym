@@ -17,14 +17,14 @@ namespace SpeedrunGym.Source;
 [BepInDependency("org.silksong-modding.assethelper")]
 [BepInDependency(DebugModInterop.PluginId, BepInDependency.DependencyFlags.SoftDependency)]
 public partial class SpeedrunGymPlugin : BaseUnityPlugin {
-    private static SpeedrunGymPlugin instance = null!;
-    private Harmony harmony = null!;
+    internal static SpeedrunGymPlugin Instance = null!;
+    internal Harmony Harmony = null!;
     private PreHeroUpdate preHeroUpdate = null!;
     private readonly TrainingDummy trainingDummy = new();
     private WorldToastManager worldToasts = null!;
 
     private void Awake() {
-        instance = this;
+        Instance = this;
         Log.Init(Logger);
         Log.Info($"Plugin {Name} ({Id}) has loaded!");
 
@@ -47,7 +47,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         SceneManager.sceneLoaded += OnSceneLoaded;
 
         try {
-            harmony = Harmony.CreateAndPatchAll(GetType().Assembly);
+            Harmony = Harmony.CreateAndPatchAll(GetType().Assembly);
         } catch (Exception e) {
             Log.Info($"Plugin {Name} ({Id}) failed to initialize: {e}");
         }
@@ -67,6 +67,9 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
     [MethodImpl(MethodImplOptions.NoInlining)]
     private void RegisterInDebugMod() {
         if (!DebugModInterop.Installed) return;
+
+        DebugModInterop.AddTranslationSheet("Mods.io.github.jakobhellermann.speedrungym");
+        DebugModInterop.AddKeybinds(typeof(SkipWait.SkipWaitKeybinds));
 
         DebugModInterop.RegisterSubmenu(() => "Speedrun Gym", GetGymMenu);
     }
@@ -94,6 +97,14 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
     private static DebugMod.UI.CommandPalette.CommandPaletteItem CreateConfigToggle(string title, ConfigEntry<bool> entry)
         => DebugModInterop.CreateAction(() => $"{title}: {(entry.Value ? "On" : "Off")}", () => entry.Value = !entry.Value);
 
+    private void Update() {
+        try {
+            SkipWait.SkipWaitFeature.UpdateHold();
+        } catch (Exception e) {
+            Log.Error("Error during Update", e);
+        }
+    }
+
     private void LateUpdate() {
         try {
             PogoEndlagDetector.LateUpdate();
@@ -113,7 +124,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
         try {
             SceneManager.sceneLoaded -= OnSceneLoaded;
             Destroy(preHeroUpdate);
-            harmony.UnpatchSelf();
+            Harmony.UnpatchSelf();
             ForceCrawPogo.Cleanup();
             worldToasts.Destroy();
             trainingDummy.Dispose();
@@ -139,7 +150,7 @@ public partial class SpeedrunGymPlugin : BaseUnityPlugin {
     }
 
     internal static new void StartCoroutine(IEnumerator coroutine) {
-        ((MonoBehaviour)instance).StartCoroutine(coroutine);
+        ((MonoBehaviour)Instance).StartCoroutine(coroutine);
     }
 }
 

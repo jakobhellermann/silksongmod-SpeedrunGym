@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using DebugMod.UI.CommandPalette;
+using UnityEngine;
 
 namespace SpeedrunGym.Source;
 
@@ -30,6 +31,32 @@ internal static class DebugModInterop {
 
     public static void AddTranslationSheet(string sheet)
         => DebugMod.DebugMod.AddTranslationSheet(sheet);
+
+    public static void LogConsole(string message)
+        => DebugMod.DebugMod.LogConsole(message);
+
+    public static bool IsKeybindHeld(string name) {
+        if (!Installed) return false;
+        if (!DebugMod.DebugMod.settings.binds.TryGetValue(name, out DebugMod.Binding binding)) return false;
+
+        // the held-key variant of DebugMod's internal Modifiers.Held()/Without()
+        return binding.Key != KeyCode.None && Input.GetKey(binding.Key)
+            && (HeldModifiers() & ~AsModifier(binding.Key)) == binding.Modifiers;
+    }
+
+    private static DebugMod.Modifier HeldModifiers() =>
+        (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) ? DebugMod.Modifier.Shift : 0)
+        | (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl) ? DebugMod.Modifier.Ctrl : 0)
+        | (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt) ? DebugMod.Modifier.Alt : 0)
+        | (Input.GetKey(KeyCode.LeftMeta) || Input.GetKey(KeyCode.RightMeta) ? DebugMod.Modifier.Meta : 0);
+
+    private static DebugMod.Modifier AsModifier(KeyCode key) => key switch {
+        KeyCode.LeftControl or KeyCode.RightControl => DebugMod.Modifier.Ctrl,
+        KeyCode.LeftShift or KeyCode.RightShift => DebugMod.Modifier.Shift,
+        KeyCode.LeftAlt or KeyCode.RightAlt => DebugMod.Modifier.Alt,
+        KeyCode.LeftMeta or KeyCode.RightMeta => DebugMod.Modifier.Meta,
+        _ => DebugMod.Modifier.None,
+    };
 
     /// Registers [BindableMethod]s of `bindables`.
     public static void AddKeybinds(Type bindables) {
