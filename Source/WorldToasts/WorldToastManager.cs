@@ -73,6 +73,16 @@ internal class WorldToastManager {
     ) {
         instance?.ShowInner(message, worldPos, color, fontSize, fade, moveUp);
     }
+    
+    internal static void ShowHero(string message, Color color, float? heightOffset = 1.5f) {
+        var hero = HeroController.UnsafeInstance;
+        if (!hero) return;
+        
+        Show(message,
+            hero!.transform.position + Vector3.up * (heightOffset ?? 1.5f) + Vector3.right * (hero.cState.facingRight ? 1 : -1),
+            color,
+            moveUp: false);
+    }
 
     private void ShowInner(string message, Vector3 worldPos, Color? color, int fontSize, bool fade, bool moveUp) {
         var resolvedColor = color ?? Color.white;

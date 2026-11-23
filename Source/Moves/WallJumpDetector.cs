@@ -5,7 +5,6 @@ using SpeedrunGym.Source.WorldToasts;
 using UnityEngine;
 using FrameTime = SpeedrunGym.Source.Moves.PogoEndlagDetector.FrameTime;
 using FrameTimeDelta = SpeedrunGym.Source.Moves.PogoEndlagDetector.FrameTimeDelta;
-using Vector3 = UnityEngine.Vector3;
 
 namespace SpeedrunGym.Source.Moves;
 
@@ -91,7 +90,7 @@ internal static class WallJumpDetector {
             if (earlyPress is var (pressedAt, _)) {
                 earlyPress = null;
                 var early = now - pressedAt;
-                if (early.Ms <= EarlyWindowMs) HeroToast(hero, $"QWJ {early} early", FailColor);
+                if (early.Ms <= EarlyWindowMs) HeroToast($"QWJ {early} early", FailColor);
             }
         }
         else if (!touching) {
@@ -126,7 +125,7 @@ internal static class WallJumpDetector {
             string message = $"QWJ +{late}";
             var waited = now - queuedAt;
             if (waited.Frames > 0) message += $" queued {waited}";
-            HeroToast(hero, message, late.Frames == 0 ? GoodColor : SlowColor);
+            HeroToast(message, late.Frames == 0 ? GoodColor : SlowColor);
         }
         else {
             var sincePossible = possibleSince is { } since ? now - since : (FrameTimeDelta?)null;
@@ -134,7 +133,7 @@ internal static class WallJumpDetector {
             if ((sincePossible ?? sinceContact) is { } lateness && lateness.Ms < WallJumpMaxLatenessMs) {
                 string message = sincePossible is { } p ? $"WJ +{p}" : "WJ";
                 if (sinceContact is { } c) message += $" (contact +{c})";
-                HeroToast(hero, message, SlowColor);
+                HeroToast(message, SlowColor);
             }
         }
 
@@ -158,7 +157,7 @@ internal static class WallJumpDetector {
         }
 
         if (earlyPress is var (pressedAt, tooFar) && (FrameTime.Now - pressedAt).Ms > EarlyWindowMs) {
-            if (tooFar is { } distance) HeroToast(hero, $"QWJ {distance:0.00}u too far", FailColor);
+            if (tooFar is { } distance) HeroToast($"QWJ {distance:0.00}u too far", FailColor);
             earlyPress = null;
         }
 
@@ -171,19 +170,18 @@ internal static class WallJumpDetector {
         if (possibleSince is not null) {
             bool frozenInput = Mathf.Abs(hero.move_input) <= Mathf.Epsilon
                 && Mathf.Abs(HeldDirection(input)) > Mathf.Epsilon;
-            HeroToast(hero,
-                $"QWJ not queued, {(frozenInput ? "move_input 0 while held" : "jump went elsewhere")}",
+            HeroToast($"QWJ not queued, {(frozenInput ? "move_input 0 while held" : "jump went elsewhere")}",
                 FailColor);
         }
         else if (FindQwjBlock(hero) == QwjBlock.NoDirection) {
-            HeroToast(hero, "QWJ: no direction", FailColor);
+            HeroToast("QWJ: no direction", FailColor);
         }
         else if (closedWindow is var (since, last, closed, reason) && (now - closed).Ms <= LateWindowMs) {
             // Visible in the walljump debug rays, so not repeated.
             string shownReason = reason is QwjBlock.CenterRayMissed or QwjBlock.NonSliderWall
                 ? ""
                 : $", {Describe(reason)}";
-            HeroToast(hero, $"QWJ {now - last} late, window {closed - since}{shownReason}", FailColor);
+            HeroToast($"QWJ {now - last} late, window {closed - since}{shownReason}", FailColor);
         }
         else {
             // Reported later, once a wall comes in range or the early window runs out.
@@ -249,13 +247,6 @@ internal static class WallJumpDetector {
 
     private static float HeldDirection(InputHandler? input) =>
         input != null ? input.inputActions.MoveVector.Vector.x : 0f;
-
-    private static void HeroToast(HeroController hero, string message, Color color) {
-        WorldToastManager.Show(message,
-            hero.transform.position + Vector3.up * 1.5f + Vector3.right * (hero.cState.facingRight ? -1 : 1),
-            color,
-            moveUp: false);
-    }
 }
 
 // ReSharper disable InconsistentNaming

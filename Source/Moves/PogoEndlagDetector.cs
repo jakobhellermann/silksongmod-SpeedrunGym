@@ -2,9 +2,7 @@ using System;
 using BepInEx.Configuration;
 using GlobalEnums;
 using HarmonyLib;
-using SpeedrunGym.Source.WorldToasts;
 using UnityEngine;
-using Vector3 = UnityEngine.Vector3;
 
 namespace SpeedrunGym.Source.Moves;
 
@@ -94,16 +92,6 @@ internal static class PogoEndlagDetector {
                 }
             }
         }
-    }
-
-    // Show a small popup floating up next to Hornet, slightly above her head.
-    private static void HeroToast(string message, Color color) {
-        var hero = HeroController.UnsafeInstance;
-        if (!hero) return;
-        WorldToastManager.Show(message,
-            hero.transform.position + Vector3.up * 1.5f + Vector3.right * (hero.cState.facingRight ? 1 : -1),
-            color,
-            moveUp: false);
     }
 
     // Runs in LateUpdate. OnUpdateState always fires earlier in the same frame (physics collision)

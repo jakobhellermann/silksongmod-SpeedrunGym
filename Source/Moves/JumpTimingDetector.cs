@@ -77,7 +77,7 @@ internal static class JumpTimingDetector {
             // rb.velocity.y convention on request: shown − = rising, + = falling.
             if (shuttlecockActive) {
                 if (sprintjumpRelease.Value)
-                    HeroToast(hero, $"release yvel={-YVel(hero):+0.0;-0.0}", Color, 1.9f);
+                    HeroToast($"release yvel={-YVel(hero):+0.0;-0.0}", Color, 1.9f);
                 shuttlecockActive = false;
             }
         }
@@ -85,7 +85,7 @@ internal static class JumpTimingDetector {
             var delta = now - r;
             released = null;
             if (repress.Value && delta.Ms <= ResetMs && !WallJumpDetector.ClaimedPress)
-                HeroToast(hero, $"repress +{Discount(delta)}", Color, 1.2f);
+                HeroToast($"repress +{Discount(delta)}", Color, 1.2f);
         }
         else if (released is { } stale && (now - stale).Ms > ResetMs) {
             released = null; // repress window elapsed
@@ -109,14 +109,6 @@ internal static class JumpTimingDetector {
             Frames = frames,
             Ms = ms,
         };
-    }
-
-    private static void HeroToast(HeroController? hero, string message, Color color, float heightOffset) {
-        if (!hero) return;
-        WorldToastManager.Show(message,
-            hero!.transform.position + Vector3.up * heightOffset + Vector3.right * (hero.cState.facingRight ? 1 : -1),
-            color,
-            moveUp: false);
     }
 }
 
